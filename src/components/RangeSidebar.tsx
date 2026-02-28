@@ -1,14 +1,31 @@
 import { useGameStore } from '../store/gameStore';
 import { useRangeStore } from '../store/rangeStore';
 import { rangePercentage } from '../data/defaultRanges';
+import { resolveScenario, getPriorActions } from '../utils/rangeResolver';
+import { getPreflopActionOrder, getPostflopActionOrder } from '../utils/positions';
 import RangeGrid from './RangeGrid';
+import type { ActionScenario } from '../types';
+
+const SCENARIO_LABELS: Record<ActionScenario, string> = {
+  open: 'Open',
+  vsRaiseCall: 'Call vs Raise',
+  vsRaise3Bet: '3-Bet',
+  vs3BetCall: 'Call vs 3-Bet',
+  vs3Bet4Bet: '4-Bet',
+};
 
 export default function RangeSidebar() {
   const players = useGameStore((s) => s.players);
   const street = useGameStore((s) => s.street);
+  const dealerSeatIndex = useGameStore((s) => s.dealerSeatIndex);
+  const seatCount = useGameStore((s) => s.settings.seatCount);
   const getRange = useRangeStore((s) => s.getRange);
 
   if (street === 'idle') return null;
+
+  const actionOrder = street === 'preflop'
+    ? getPreflopActionOrder(dealerSeatIndex, seatCount)
+    : getPostflopActionOrder(dealerSeatIndex, seatCount);
 
   const activePlayers = players.filter((p) => !p.hasFolded);
 
@@ -17,7 +34,17 @@ export default function RangeSidebar() {
       <h2 className="text-sm font-bold text-gray-300 uppercase tracking-wide">Hand Ranges</h2>
 
       {activePlayers.map((player) => {
-        const range = getRange(player.position, 'open');
+        const priorActions = getPriorActions(
+          players.map((p) => ({ seatIndex: p.seatIndex, actionHistory: p.actionHistory })),
+          actionOrder,
+          player.seatIndex,
+        );
+
+        const scenario = player.actionHistory.length > 0
+          ? resolveScenario(player.actionHistory, priorActions)
+          : 'open';
+
+        const range = getRange(player.position, scenario);
         const pct = rangePercentage(range);
 
         return (
@@ -38,6 +65,11 @@ export default function RangeSidebar() {
                 {pct.toFixed(1)}%
               </span>
             </div>
+            {player.actionHistory.length > 0 && (
+              <div className="text-[10px] text-blue-400 mb-1">
+                {SCENARIO_LABELS[scenario]}
+              </div>
+            )}
             <RangeGrid range={range} size="sm" />
           </div>
         );

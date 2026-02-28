@@ -92,11 +92,69 @@ const DEFAULT_OPEN_RANGES: Record<Position, string> = {
   'BB':    '22+,A2s+,K2s+,Q2s+,J5s+,T6s+,96s+,85s+,75s+,64s+,54s,A2o+,K5o+,Q8o+,J8o+,T8o+,98o',
 };
 
+// Calling ranges vs a raise: tighter than opening ranges
+const DEFAULT_VS_RAISE_CALL_RANGES: Record<Position, string> = {
+  'UTG':   '99+,AQs+,AKo',
+  'UTG+1': '88+,AJs+,KQs,AQo+',
+  'UTG+2': '77+,ATs+,KQs,QJs,AJo+,KQo',
+  'LJ':    '66+,A9s+,KJs+,QJs,JTs,AJo+,KQo',
+  'HJ':    '55+,A8s+,KTs+,QTs+,JTs,T9s,ATo+,KJo+',
+  'CO':    '44+,A5s+,K9s+,Q9s+,J9s+,T9s,98s,A9o+,KTo+,QJo',
+  'BTN':   '33+,A2s+,K7s+,Q8s+,J8s+,T8s+,97s+,87s,76s,A8o+,KTo+,QTo+,JTo',
+  'SB':    '44+,A5s+,K9s+,Q9s+,J9s+,T9s,98s,A9o+,KTo+,QJo',
+  'BB':    '22+,A2s+,K4s+,Q7s+,J7s+,T7s+,97s+,86s+,76s,65s,A7o+,K9o+,QTo+,JTo',
+};
+
+// 3-betting ranges: tight, value-heavy
+const DEFAULT_VS_RAISE_3BET_RANGES: Record<Position, string> = {
+  'UTG':   'QQ+,AKs',
+  'UTG+1': 'QQ+,AKs,AKo',
+  'UTG+2': 'JJ+,AKs,AKo',
+  'LJ':    'TT+,AQs+,AKo',
+  'HJ':    'TT+,AQs+,AKo,A5s',
+  'CO':    '99+,AJs+,KQs,AQo+,A5s,A4s',
+  'BTN':   '88+,ATs+,KQs,AJo+,KQo,A5s,A4s',
+  'SB':    '99+,AJs+,KQs,AQo+,A5s',
+  'BB':    'TT+,AQs+,AKo,A5s',
+};
+
+// Calling a 3-bet after opening: medium pairs, suited broadways
+const DEFAULT_VS_3BET_CALL_RANGES: Record<Position, string> = {
+  'UTG':   'TT,JJ,AQs,AQo',
+  'UTG+1': 'TT,JJ,AQs,AJs,AQo',
+  'UTG+2': '99,TT,AQs,AJs,KQs,AQo',
+  'LJ':    '88+,AJs+,KQs,AJo',
+  'HJ':    '77+,ATs+,KQs,KJs,AJo+',
+  'CO':    '66+,A9s+,KJs+,QJs,ATo+,KQo',
+  'BTN':   '55+,A8s+,KTs+,QJs,JTs,ATo+,KQo',
+  'SB':    '77+,ATs+,KQs,KJs,AJo+',
+  'BB':    '66+,A9s+,KJs+,QJs,JTs,ATo+,KQo',
+};
+
+// 4-betting after opening and facing a 3-bet
+const DEFAULT_VS_3BET_4BET_RANGES: Record<Position, string> = {
+  'UTG':   'KK+,AKs',
+  'UTG+1': 'KK+,AKs',
+  'UTG+2': 'QQ+,AKs',
+  'LJ':    'QQ+,AKs,AKo',
+  'HJ':    'QQ+,AKs,AKo',
+  'CO':    'JJ+,AKs,AKo',
+  'BTN':   'TT+,AQs+,AKo',
+  'SB':    'JJ+,AKs,AKo',
+  'BB':    'QQ+,AKs,AKo',
+};
+
 function buildDefaultProfile(): RangeProfile {
   const profile = {} as RangeProfile;
   for (const [pos, notation] of Object.entries(DEFAULT_OPEN_RANGES)) {
-    const openRange = parseRange(notation);
-    profile[pos as Position] = { open: openRange };
+    const position = pos as Position;
+    profile[position] = {
+      open: parseRange(notation),
+      vsRaiseCall: parseRange(DEFAULT_VS_RAISE_CALL_RANGES[position] ?? ''),
+      vsRaise3Bet: parseRange(DEFAULT_VS_RAISE_3BET_RANGES[position] ?? ''),
+      vs3BetCall: parseRange(DEFAULT_VS_3BET_CALL_RANGES[position] ?? ''),
+      vs3Bet4Bet: parseRange(DEFAULT_VS_3BET_4BET_RANGES[position] ?? ''),
+    };
   }
   return profile;
 }
