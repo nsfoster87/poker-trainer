@@ -4,6 +4,7 @@ import PokerTable from './components/PokerTable';
 import CardPickerModal from './components/CardPickerModal';
 import ActionPanel from './components/ActionPanel';
 import RangeSidebar from './components/RangeSidebar';
+import RangeEditorModal from './components/RangeEditorModal';
 import { useGameStore } from './store/gameStore';
 import type { Card } from './types';
 import { cardKey } from './utils/deck';
@@ -17,6 +18,7 @@ export default function App() {
   const setCommunityCards = useGameStore((s) => s.setCommunityCards);
 
   const [selectedCards, setSelectedCards] = useState<Card[]>([]);
+  const [rangeEditorOpen, setRangeEditorOpen] = useState(false);
 
   const maxSelections = cardPickerMode === 'hole' ? 2
     : cardPickerMode === 'flop' ? 3
@@ -52,7 +54,7 @@ export default function App() {
 
   return (
     <div className="min-h-full flex flex-col">
-      <Header />
+      <Header onOpenRangeEditor={() => setRangeEditorOpen(true)} />
       <div className="flex-1 flex">
         <main className="flex-1 flex items-center justify-center p-4">
           <PokerTable />
@@ -73,6 +75,10 @@ export default function App() {
           onCancel={handleCancel}
           title={title}
         />
+      )}
+
+      {rangeEditorOpen && (
+        <RangeEditorModal onClose={() => setRangeEditorOpen(false)} />
       )}
     </div>
   );

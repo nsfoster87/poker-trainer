@@ -1,7 +1,11 @@
 import { useGameStore } from '../store/gameStore';
 import BlindsEditor from './BlindsEditor';
 
-export default function Header() {
+interface HeaderProps {
+  onOpenRangeEditor: () => void;
+}
+
+export default function Header({ onOpenRangeEditor }: HeaderProps) {
   const nextHand = useGameStore((s) => s.nextHand);
   const deal = useGameStore((s) => s.deal);
   const street = useGameStore((s) => s.street);
@@ -24,6 +28,12 @@ export default function Header() {
             ))}
           </select>
         </div>
+        <button
+          onClick={onOpenRangeEditor}
+          className="px-3 py-1.5 text-sm text-gray-300 hover:text-white border border-gray-600 hover:border-gray-500 rounded transition-colors"
+        >
+          Edit Ranges
+        </button>
       </div>
 
       <BlindsEditor />
