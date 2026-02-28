@@ -33,7 +33,7 @@ export default function RangeGrid({ range, size = 'sm' }: RangeGridProps) {
               `}
               title={label}
             >
-              {size === 'md' && label}
+              {label}
             </div>
           );
         })
