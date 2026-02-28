@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import Header from './components/Header';
 import PokerTable from './components/PokerTable';
 import CardPickerModal from './components/CardPickerModal';
+import ActionPanel from './components/ActionPanel';
 import { useGameStore } from './store/gameStore';
 import type { Card } from './types';
 import { cardKey } from './utils/deck';
@@ -54,6 +55,8 @@ export default function App() {
       <main className="flex-1 flex items-center justify-center p-4">
         <PokerTable />
       </main>
+
+      <ActionPanel />
 
       {cardPickerOpen && cardPickerMode && (
         <CardPickerModal

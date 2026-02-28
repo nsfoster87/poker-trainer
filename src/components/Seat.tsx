@@ -1,6 +1,7 @@
 import type { Player } from '../types';
 import DealerChip from './DealerChip';
 import PlayerCards from './PlayerCards';
+import BetDisplay from './BetDisplay';
 
 interface SeatProps {
   player: Player;
@@ -49,6 +50,13 @@ export default function Seat({ player, isDealer, isActive, isDealt, style, onCon
       <div className="mt-1 text-xs text-gray-300 bg-gray-900/70 px-2 py-0.5 rounded whitespace-nowrap">
         {player.stack}
       </div>
+
+      {/* Current bet */}
+      {player.currentBet > 0 && (
+        <div className="mt-0.5">
+          <BetDisplay amount={player.currentBet} />
+        </div>
+      )}
     </div>
   );
 }

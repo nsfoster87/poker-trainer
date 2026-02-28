@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Player, Street, Card, Settings, ActionRecord } from '../types';
 import { assignPositions, getPreflopActionOrder } from '../utils/positions';
 import { cardKey } from '../utils/deck';
+import { findNextActivePlayer, getFirstToAct } from './actionLogic';
 
 interface GameStore {
   settings: Settings;
@@ -13,11 +14,9 @@ interface GameStore {
   activePlayerIndex: number | null;
   dealerSeatIndex: number;
   players: Player[];
+  lastRaiserSeat: number | null;
 
-  // All cards currently in use (hole cards + community cards)
   usedCardKeys: Set<string>;
-
-  // Card picker state
   cardPickerOpen: boolean;
   cardPickerMode: 'hole' | 'flop' | 'turn' | 'river' | null;
 
@@ -86,6 +85,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   activePlayerIndex: null,
   dealerSeatIndex: 4,
   players: buildPlayers(DEFAULT_SETTINGS, 4),
+  lastRaiserSeat: null,
   usedCardKeys: new Set(),
   cardPickerOpen: false,
   cardPickerMode: null,
@@ -93,12 +93,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   updateSettings: (patch) => {
     const newSettings = { ...get().settings, ...patch };
     const players = buildPlayers(newSettings, get().dealerSeatIndex);
-    set({ settings: newSettings, players, street: 'idle', pot: 0, communityCards: [], activePlayerIndex: null, usedCardKeys: new Set() });
+    set({ settings: newSettings, players, street: 'idle', pot: 0, communityCards: [], activePlayerIndex: null, usedCardKeys: new Set(), lastRaiserSeat: null });
   },
 
   setDealerSeat: (seatIndex) => {
     const players = buildPlayers(get().settings, seatIndex);
-    set({ dealerSeatIndex: seatIndex, players, street: 'idle', pot: 0, communityCards: [], activePlayerIndex: null, usedCardKeys: new Set() });
+    set({ dealerSeatIndex: seatIndex, players, street: 'idle', pot: 0, communityCards: [], activePlayerIndex: null, usedCardKeys: new Set(), lastRaiserSeat: null });
   },
 
   setUserSeat: (seatIndex) => {
@@ -111,7 +111,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { dealerSeatIndex, settings } = get();
     const newDealer = (dealerSeatIndex + 1) % settings.seatCount;
     const players = buildPlayers(settings, newDealer);
-    set({ dealerSeatIndex: newDealer, players, street: 'idle', pot: 0, communityCards: [], activePlayerIndex: null, usedCardKeys: new Set() });
+    set({ dealerSeatIndex: newDealer, players, street: 'idle', pot: 0, communityCards: [], activePlayerIndex: null, usedCardKeys: new Set(), lastRaiserSeat: null });
   },
 
   initializePlayers: () => {
@@ -123,7 +123,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { settings, dealerSeatIndex } = get();
     const players = buildPlayers(settings, dealerSeatIndex);
 
-    // Post blinds and antes
     let pot = 0;
     for (const p of players) {
       if (settings.ante > 0) {
@@ -136,18 +135,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     for (const p of players) {
       const pos = posMap.get(p.seatIndex);
       if (pos === 'SB') {
-        const sbAmount = settings.smallBlind;
-        p.currentBet = sbAmount;
-        p.stack -= sbAmount;
-        pot += sbAmount;
+        p.currentBet = settings.smallBlind;
+        p.stack -= settings.smallBlind;
+        pot += settings.smallBlind;
       } else if (pos === 'BB') {
-        const bbAmount = settings.bigBlind;
-        p.currentBet = bbAmount;
-        p.stack -= bbAmount;
-        pot += bbAmount;
+        p.currentBet = settings.bigBlind;
+        p.stack -= settings.bigBlind;
+        pot += settings.bigBlind;
       }
-      // Give face-down cards to all players (represented as null until user picks)
-      p.cards = null;
     }
 
     set({
@@ -159,22 +154,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
       usedCardKeys: new Set(),
       cardPickerOpen: true,
       cardPickerMode: 'hole',
+      lastRaiserSeat: null,
     });
   },
 
   setUserHoleCards: (cards) => {
-    const players = [...get().players];
-    const userIdx = players.findIndex((p) => p.isUser);
-    if (userIdx >= 0) {
-      players[userIdx] = { ...players[userIdx], cards };
-    }
-    // Mark all non-user players as having face-down cards (placeholder)
-    for (let i = 0; i < players.length; i++) {
-      if (!players[i].isUser && !players[i].cards) {
-        // Use a sentinel to indicate dealt but unknown cards
-        players[i] = { ...players[i], cards: null };
-      }
-    }
+    const players = get().players.map((p) =>
+      p.isUser ? { ...p, cards } : p
+    );
 
     const { dealerSeatIndex, settings } = get();
     const preflopOrder = getPreflopActionOrder(dealerSeatIndex, settings.seatCount);
@@ -199,95 +186,100 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   setCommunityCards: (newCards) => {
-    const communityCards = [...get().communityCards, ...newCards];
-    const usedCardKeys = computeUsedCards(get().players, communityCards);
-    set({ communityCards, usedCardKeys, cardPickerOpen: false, cardPickerMode: null });
+    const state = get();
+    const communityCards = [...state.communityCards, ...newCards];
+    const usedCardKeys = computeUsedCards(state.players, communityCards);
+
+    // Reset bets for new street and find first to act
+    const players = state.players.map((p) => ({
+      ...p,
+      currentBet: 0,
+      actionHistory: [] as ActionRecord[],
+    }));
+    const firstToAct = getFirstToAct(players, state.dealerSeatIndex, state.settings.seatCount, state.street);
+
+    set({
+      communityCards,
+      usedCardKeys,
+      cardPickerOpen: false,
+      cardPickerMode: null,
+      players,
+      activePlayerIndex: firstToAct,
+      lastRaiserSeat: null,
+    });
   },
 
   playerAction: (seatIndex, action, amount) => {
     const state = get();
-    const players = [...state.players];
-    const idx = players.findIndex((p) => p.seatIndex === seatIndex);
-    if (idx < 0) return;
+    const players = state.players.map((p) => (p.seatIndex === seatIndex ? { ...p } : p));
+    const player = players.find((p) => p.seatIndex === seatIndex);
+    if (!player) return;
 
-    const player = { ...players[idx] };
     const record: ActionRecord = { action, amount };
     player.actionHistory = [...player.actionHistory, record];
 
     let potDelta = 0;
+    let newLastRaiser = state.lastRaiserSeat;
+
     if (action === 'fold') {
       player.hasFolded = true;
       player.cards = null;
     } else if (action === 'call') {
-      const callAmount = Math.max(0, (amount ?? state.settings.bigBlind) - player.currentBet);
+      const highestBet = Math.max(...players.map((p) => p.currentBet));
+      const callAmount = Math.max(0, highestBet - player.currentBet);
       player.stack -= callAmount;
       potDelta = callAmount;
-      player.currentBet += callAmount;
+      player.currentBet = highestBet;
     } else if (action === 'raise') {
       const raiseTotal = amount ?? state.settings.bigBlind * 2;
       const additional = raiseTotal - player.currentBet;
       player.stack -= additional;
       potDelta = additional;
       player.currentBet = raiseTotal;
-    }
-
-    players[idx] = player;
-
-    // Find next active player
-    const { dealerSeatIndex, settings, street } = state;
-    const actionOrder = getPreflopActionOrder(dealerSeatIndex, settings.seatCount);
-    const currentOrderIdx = actionOrder.indexOf(seatIndex);
-    let nextActive: number | null = null;
-
-    for (let i = 1; i < actionOrder.length; i++) {
-      const candidateIdx = (currentOrderIdx + i) % actionOrder.length;
-      const candidateSeat = actionOrder[candidateIdx];
-      const candidatePlayer = players.find((p) => p.seatIndex === candidateSeat);
-      if (candidatePlayer && !candidatePlayer.hasFolded) {
-        // Check if this player has already had a chance to act
-        if (candidatePlayer.actionHistory.length === 0 || (action === 'raise' && candidateSeat !== seatIndex)) {
-          nextActive = candidateSeat;
-          break;
-        }
-      }
+      newLastRaiser = seatIndex;
     }
 
     // Check if only one player remains
     const activePlayers = players.filter((p) => !p.hasFolded);
-    if (activePlayers.length <= 1) {
-      nextActive = null;
+    let nextActive: number | null = null;
+
+    if (activePlayers.length > 1) {
+      nextActive = findNextActivePlayer(
+        seatIndex,
+        players,
+        state.dealerSeatIndex,
+        state.settings.seatCount,
+        state.street,
+        newLastRaiser,
+      );
     }
 
     set({
       players,
       pot: state.pot + potDelta,
       activePlayerIndex: nextActive,
+      lastRaiserSeat: newLastRaiser,
     });
-
-    // If no next active and street is not yet complete, handle street transition
-    if (nextActive === null && activePlayers.length > 1 && street === 'preflop') {
-      // Will be handled by advanceToNextStreet
-    }
   },
 
   advanceToNextStreet: () => {
-    const { street, players } = get();
-    const streetOrder: Street[] = ['preflop', 'flop', 'turn', 'river'];
-    const currentIdx = streetOrder.indexOf(street);
-    if (currentIdx < 0 || currentIdx >= streetOrder.length - 1) return;
+    const { street } = get();
+    const streetMap: Record<string, { next: Street; pickerMode: 'flop' | 'turn' | 'river' }> = {
+      preflop: { next: 'flop', pickerMode: 'flop' },
+      flop: { next: 'turn', pickerMode: 'turn' },
+      turn: { next: 'river', pickerMode: 'river' },
+    };
 
-    const nextStreet = streetOrder[currentIdx + 1];
+    const transition = streetMap[street];
+    if (!transition) return;
 
-    // Reset current bets for all players
-    const updatedPlayers = players.map((p) => ({ ...p, currentBet: 0 }));
-
-    if (nextStreet === 'flop') {
-      set({ street: nextStreet, players: updatedPlayers, activePlayerIndex: null, cardPickerOpen: true, cardPickerMode: 'flop' });
-    } else if (nextStreet === 'turn') {
-      set({ street: nextStreet, players: updatedPlayers, activePlayerIndex: null, cardPickerOpen: true, cardPickerMode: 'turn' });
-    } else if (nextStreet === 'river') {
-      set({ street: nextStreet, players: updatedPlayers, activePlayerIndex: null, cardPickerOpen: true, cardPickerMode: 'river' });
-    }
+    set({
+      street: transition.next,
+      activePlayerIndex: null,
+      cardPickerOpen: true,
+      cardPickerMode: transition.pickerMode,
+      lastRaiserSeat: null,
+    });
   },
 
   nextHand: () => {
@@ -304,6 +296,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       usedCardKeys: new Set(),
       cardPickerOpen: false,
       cardPickerMode: null,
+      lastRaiserSeat: null,
     });
   },
 }));
