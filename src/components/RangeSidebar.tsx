@@ -19,6 +19,7 @@ export default function RangeSidebar() {
   const street = useGameStore((s) => s.street);
   const dealerSeatIndex = useGameStore((s) => s.dealerSeatIndex);
   const seatCount = useGameStore((s) => s.settings.seatCount);
+  const activePlayerIndex = useGameStore((s) => s.activePlayerIndex);
   const getRange = useRangeStore((s) => s.getRange);
 
   if (street === 'idle') return null;
@@ -52,9 +53,11 @@ export default function RangeSidebar() {
             key={player.seatIndex}
             className={`
               p-2 rounded-lg border
-              ${player.isUser
-                ? 'border-blue-500/50 bg-blue-900/20'
-                : 'border-gray-700 bg-gray-800/50'}
+              ${player.seatIndex === activePlayerIndex
+                ? 'border-yellow-400 bg-yellow-900/20'
+                : player.isUser
+                  ? 'border-blue-500/50 bg-blue-900/20'
+                  : 'border-gray-700 bg-gray-800/50'}
             `}
           >
             <div className="flex items-center justify-between mb-1">
