@@ -1,15 +1,17 @@
 import type { Player } from '../types';
 import DealerChip from './DealerChip';
+import PlayerCards from './PlayerCards';
 
 interface SeatProps {
   player: Player;
   isDealer: boolean;
   isActive: boolean;
+  isDealt: boolean;
   style: React.CSSProperties;
   onContextMenu: (e: React.MouseEvent) => void;
 }
 
-export default function Seat({ player, isDealer, isActive, style, onContextMenu }: SeatProps) {
+export default function Seat({ player, isDealer, isActive, isDealt, style, onContextMenu }: SeatProps) {
   return (
     <div
       className="absolute flex flex-col items-center -translate-x-1/2 -translate-y-1/2"
@@ -19,6 +21,13 @@ export default function Seat({ player, isDealer, isActive, style, onContextMenu 
         onContextMenu(e);
       }}
     >
+      {/* Cards above the seat */}
+      {isDealt && !player.hasFolded && (
+        <div className="mb-1">
+          <PlayerCards cards={player.cards} faceUp={player.isUser && !!player.cards} />
+        </div>
+      )}
+
       {isDealer && (
         <div className="absolute -top-1 -right-1 z-10">
           <DealerChip />

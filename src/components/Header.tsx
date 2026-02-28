@@ -2,7 +2,9 @@ import { useGameStore } from '../store/gameStore';
 import BlindsEditor from './BlindsEditor';
 
 export default function Header() {
-  const rotateDealerLeft = useGameStore((s) => s.rotateDealerLeft);
+  const nextHand = useGameStore((s) => s.nextHand);
+  const deal = useGameStore((s) => s.deal);
+  const street = useGameStore((s) => s.street);
   const seatCount = useGameStore((s) => s.settings.seatCount);
   const updateSettings = useGameStore((s) => s.updateSettings);
 
@@ -27,8 +29,16 @@ export default function Header() {
       <BlindsEditor />
 
       <div className="flex items-center gap-3">
+        {street === 'idle' && (
+          <button
+            onClick={deal}
+            className="px-4 py-2 bg-green-700 hover:bg-green-600 text-white text-sm font-medium rounded transition-colors"
+          >
+            Deal
+          </button>
+        )}
         <button
-          onClick={rotateDealerLeft}
+          onClick={nextHand}
           className="px-4 py-2 bg-amber-700 hover:bg-amber-600 text-white text-sm font-medium rounded transition-colors"
         >
           Next Hand
