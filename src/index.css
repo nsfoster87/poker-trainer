@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@theme {
+  --grid-template-columns-13: repeat(13, minmax(0, 1fr));
+}
+
 html, body, #root {
   height: 100%;
   margin: 0;

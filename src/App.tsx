@@ -3,6 +3,7 @@ import Header from './components/Header';
 import PokerTable from './components/PokerTable';
 import CardPickerModal from './components/CardPickerModal';
 import ActionPanel from './components/ActionPanel';
+import RangeSidebar from './components/RangeSidebar';
 import { useGameStore } from './store/gameStore';
 import type { Card } from './types';
 import { cardKey } from './utils/deck';
@@ -52,9 +53,12 @@ export default function App() {
   return (
     <div className="min-h-full flex flex-col">
       <Header />
-      <main className="flex-1 flex items-center justify-center p-4">
-        <PokerTable />
-      </main>
+      <div className="flex-1 flex">
+        <main className="flex-1 flex items-center justify-center p-4">
+          <PokerTable />
+        </main>
+        <RangeSidebar />
+      </div>
 
       <ActionPanel />
 
