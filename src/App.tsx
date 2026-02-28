@@ -53,9 +53,9 @@ export default function App() {
   }, [closeCardPicker]);
 
   return (
-    <div className="min-h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-hidden">
       <Header onOpenRangeEditor={() => setRangeEditorOpen(true)} />
-      <div className="flex-1 flex">
+      <div className="flex-1 flex min-h-0">
         <RangeSidebar />
         <main className="flex-1 flex items-center justify-center p-4">
           <PokerTable />
