@@ -31,7 +31,7 @@ export default function RangeSidebar() {
   const activePlayers = players.filter((p) => !p.hasFolded);
 
   return (
-    <div className="w-64 bg-gray-900/80 border-l border-gray-700 overflow-y-auto p-3 space-y-3">
+    <div className="w-64 bg-gray-900/80 border-r border-gray-700 overflow-y-auto p-3 space-y-3">
       <h2 className="text-sm font-bold text-gray-300 uppercase tracking-wide">Hand Ranges</h2>
 
       {activePlayers.map((player) => {

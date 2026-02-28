@@ -56,10 +56,10 @@ export default function App() {
     <div className="min-h-full flex flex-col">
       <Header onOpenRangeEditor={() => setRangeEditorOpen(true)} />
       <div className="flex-1 flex">
+        <RangeSidebar />
         <main className="flex-1 flex items-center justify-center p-4">
           <PokerTable />
         </main>
-        <RangeSidebar />
       </div>
 
       <ActionPanel />
