@@ -1,0 +1,39 @@
+import { useGameStore } from '../store/gameStore';
+import BlindsEditor from './BlindsEditor';
+
+export default function Header() {
+  const rotateDealerLeft = useGameStore((s) => s.rotateDealerLeft);
+  const seatCount = useGameStore((s) => s.settings.seatCount);
+  const updateSettings = useGameStore((s) => s.updateSettings);
+
+  return (
+    <header className="flex items-center justify-between px-6 py-3 bg-gray-900/80 border-b border-gray-700">
+      <div className="flex items-center gap-4">
+        <h1 className="text-lg font-bold text-white">Poker Trainer</h1>
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-400">Seats:</label>
+          <select
+            value={seatCount}
+            onChange={(e) => updateSettings({ seatCount: Number(e.target.value) })}
+            className="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm text-white"
+          >
+            {[2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <BlindsEditor />
+
+      <div className="flex items-center gap-3">
+        <button
+          onClick={rotateDealerLeft}
+          className="px-4 py-2 bg-amber-700 hover:bg-amber-600 text-white text-sm font-medium rounded transition-colors"
+        >
+          Next Hand
+        </button>
+      </div>
+    </header>
+  );
+}

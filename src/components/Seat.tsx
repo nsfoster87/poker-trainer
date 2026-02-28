@@ -6,13 +6,18 @@ interface SeatProps {
   isDealer: boolean;
   isActive: boolean;
   style: React.CSSProperties;
+  onContextMenu: (e: React.MouseEvent) => void;
 }
 
-export default function Seat({ player, isDealer, isActive, style }: SeatProps) {
+export default function Seat({ player, isDealer, isActive, style, onContextMenu }: SeatProps) {
   return (
     <div
       className="absolute flex flex-col items-center -translate-x-1/2 -translate-y-1/2"
       style={style}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onContextMenu(e);
+      }}
     >
       {isDealer && (
         <div className="absolute -top-1 -right-1 z-10">
@@ -22,11 +27,12 @@ export default function Seat({ player, isDealer, isActive, style }: SeatProps) {
       <div
         className={`
           w-16 h-16 rounded-full flex items-center justify-center
-          border-2 text-sm font-bold select-none transition-all
+          border-2 text-sm font-bold select-none cursor-pointer transition-all
           ${player.isUser
             ? 'bg-blue-600 border-blue-400 text-white'
             : 'bg-gray-700 border-gray-500 text-gray-200'}
           ${isActive ? 'ring-2 ring-yellow-400 ring-offset-2 ring-offset-green-900' : ''}
+          ${player.hasFolded ? 'opacity-40' : ''}
         `}
       >
         {player.position}
