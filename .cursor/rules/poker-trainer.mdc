@@ -1,0 +1,60 @@
+---
+description: Poker Trainer project conventions, architecture, and tech stack reference
+alwaysApply: true
+---
+
+# Poker Trainer Project
+
+## Tech Stack
+
+- React 18+ with TypeScript
+- Vite for bundling/dev server
+- Tailwind CSS for styling
+- Zustand for state management (two stores: gameStore, rangeStore)
+- localStorage for persistence of user settings and custom hand ranges
+- No backend — entirely client-side
+
+## Architecture
+
+```
+App
++-- Header (NextHandButton, DealButton, BlindsAnteEditor, SettingsDropdown)
++-- MainLayout (flex row: TableArea + RangeSidebar)
+|   +-- TableArea
+|   |   +-- PokerTable (oval green felt, CSS positioned)
+|   |   |   +-- Seat[] (absolutely positioned around ellipse)
+|   |   |   +-- CommunityCards (center)
+|   |   |   +-- PotDisplay (center)
+|   |   +-- ActionPanel (fold/call/raise + BetSizer)
+|   +-- RangeSidebar (scrollable, one mini range chart per active player)
++-- CardPickerModal (4x13 grid overlay)
++-- RangeEditorModal (full-screen, all positions)
++-- ContextMenu (right-click: "Sit Here", "Set Dealer")
+```
+
+## State Management
+
+- `src/store/gameStore.ts` — Game state: players, street, pot, community cards, dealer, active player, settings (seat count, blinds, antes)
+- `src/store/rangeStore.ts` — Range profiles: per-position ranges keyed by action scenario, persisted to localStorage
+- `src/store/actionLogic.ts` — Pure functions for action sequencing, pot math, street transitions
+
+## Key Types (defined in `src/types/index.ts`)
+
+- `Position`: 'UTG' | 'UTG+1' | 'UTG+2' | 'LJ' | 'HJ' | 'CO' | 'BTN' | 'SB' | 'BB'
+- `Rank`: 'A' | 'K' | 'Q' | 'J' | 'T' | '9' | '8' | '7' | '6' | '5' | '4' | '3' | '2'
+- `Suit`: 'spades' | 'hearts' | 'diamonds' | 'clubs'
+- `Card`: { rank: Rank; suit: Suit }
+- `HandRange`: boolean[][] (13x13 grid)
+- `ActionScenario`: 'open' | 'vsRaiseCall' | 'vsRaise3Bet' | 'vs3BetCall' | 'vs3Bet4Bet'
+
+## File Conventions
+
+- Components in `src/components/` — one component per file, PascalCase filenames
+- Utility functions in `src/utils/` — pure functions, camelCase filenames
+- Data files in `src/data/` — static default data (ranges, etc.)
+- Prefer Tailwind utility classes over custom CSS
+- Use Zustand `useStore` hooks for state access in components
+
+## Poker Domain Reference
+
+See `docs/POKER_DOMAIN.md` for complete poker rules, position definitions, hand range grid structure, combination math, and default GTO ranges.
