@@ -3,6 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { computeSeatPositions } from '../utils/seatLayout';
 import Seat from './Seat';
 import ContextMenu from './ContextMenu';
+import CommunityCards from './CommunityCards';
 
 interface MenuState {
   x: number;
@@ -19,6 +20,8 @@ export default function PokerTable() {
   const setDealerSeat = useGameStore((s) => s.setDealerSeat);
   const setUserSeat = useGameStore((s) => s.setUserSeat);
   const pot = useGameStore((s) => s.pot);
+  const communityCards = useGameStore((s) => s.communityCards);
+  const advanceToNextStreet = useGameStore((s) => s.advanceToNextStreet);
   const seatPositions = computeSeatPositions(seatCount);
 
   const [menu, setMenu] = useState<MenuState | null>(null);
@@ -35,6 +38,10 @@ export default function PokerTable() {
     : [];
 
   const isDealt = street !== 'idle';
+  const activePlayers = players.filter((p) => !p.hasFolded);
+  const roundComplete = isDealt && activePlayerIndex === null && activePlayers.length > 1;
+  const canAdvance = street === 'preflop' || street === 'flop' || street === 'turn';
+  const showAdvance = roundComplete && canAdvance;
 
   return (
     <div className="relative w-full max-w-4xl aspect-[16/10] mx-auto">
@@ -42,12 +49,33 @@ export default function PokerTable() {
       <div className="absolute inset-[8%] rounded-[50%] bg-green-800 border-[12px] border-amber-900 shadow-[inset_0_4px_30px_rgba(0,0,0,0.5),0_8px_40px_rgba(0,0,0,0.6)]">
         <div className="absolute inset-0 rounded-[50%] bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)]" />
 
-        {/* Pot display */}
-        {isDealt && pot > 0 && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-            <div className="text-sm text-yellow-300 font-bold bg-black/40 px-3 py-1 rounded-full">
-              Pot: {pot}
-            </div>
+        {/* Center content: community cards + pot */}
+        {isDealt && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2">
+            {communityCards.length > 0 && <CommunityCards cards={communityCards} />}
+            {pot > 0 && (
+              <div className="text-sm text-yellow-300 font-bold bg-black/40 px-3 py-1 rounded-full">
+                Pot: {pot}
+              </div>
+            )}
+            {showAdvance && (
+              <button
+                onClick={advanceToNextStreet}
+                className="mt-1 px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded transition-colors"
+              >
+                {street === 'preflop' ? 'Deal Flop' : street === 'flop' ? 'Deal Turn' : 'Deal River'}
+              </button>
+            )}
+            {isDealt && activePlayerIndex === null && activePlayers.length <= 1 && (
+              <div className="text-sm text-green-400 font-bold bg-black/40 px-3 py-1 rounded-full">
+                Hand complete — all folded
+              </div>
+            )}
+            {street === 'river' && activePlayerIndex === null && activePlayers.length > 1 && (
+              <div className="text-sm text-green-400 font-bold bg-black/40 px-3 py-1 rounded-full">
+                Hand complete — showdown
+              </div>
+            )}
           </div>
         )}
       </div>
