@@ -2,9 +2,17 @@ import { useState, useCallback } from 'react';
 import { useRangeStore } from '../store/rangeStore';
 import { rangePercentage } from '../data/defaultRanges';
 import EditableRangeGrid from './EditableRangeGrid';
-import type { Position, HandRange } from '../types';
+import type { Position, ActionScenario, HandRange } from '../types';
 
 const ALL_POSITIONS: Position[] = ['UTG', 'UTG+1', 'UTG+2', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+
+const SCENARIOS: { key: ActionScenario; label: string }[] = [
+  { key: 'open', label: 'Open (RFI)' },
+  { key: 'vsRaiseCall', label: 'Call vs Raise' },
+  { key: 'vsRaise3Bet', label: '3-Bet' },
+  { key: 'vs3BetCall', label: 'Call vs 3-Bet' },
+  { key: 'vs3Bet4Bet', label: '4-Bet' },
+];
 
 interface RangeEditorModalProps {
   onClose: () => void;
@@ -17,23 +25,24 @@ export default function RangeEditorModal({ onClose }: RangeEditorModalProps) {
   const resetToDefaults = useRangeStore((s) => s.resetToDefaults);
 
   const [selectedPosition, setSelectedPosition] = useState<Position>('UTG');
+  const [selectedScenario, setSelectedScenario] = useState<ActionScenario>('open');
 
-  const currentRange = rangeProfile[selectedPosition]?.open
-    ?? Array.from({ length: 13 }, () => Array(13).fill(false) as boolean[]);
+  const emptyGrid = () => Array.from({ length: 13 }, () => Array(13).fill(false) as boolean[]);
+
+  const currentRange = rangeProfile[selectedPosition]?.[selectedScenario] ?? emptyGrid();
 
   const handleRangeChange = useCallback((range: HandRange) => {
-    setRange(selectedPosition, 'open', range);
-  }, [selectedPosition, setRange]);
+    setRange(selectedPosition, selectedScenario, range);
+  }, [selectedPosition, selectedScenario, setRange]);
 
   const clearRange = useCallback(() => {
-    const empty = Array.from({ length: 13 }, () => Array(13).fill(false) as boolean[]);
-    setRange(selectedPosition, 'open', empty);
-  }, [selectedPosition, setRange]);
+    setRange(selectedPosition, selectedScenario, emptyGrid());
+  }, [selectedPosition, selectedScenario, setRange]);
 
   const selectAll = useCallback(() => {
     const full = Array.from({ length: 13 }, () => Array(13).fill(true) as boolean[]);
-    setRange(selectedPosition, 'open', full);
-  }, [selectedPosition, setRange]);
+    setRange(selectedPosition, selectedScenario, full);
+  }, [selectedPosition, selectedScenario, setRange]);
 
   const handleSave = useCallback(() => {
     saveAll();
@@ -75,7 +84,7 @@ export default function RangeEditorModal({ onClose }: RangeEditorModalProps) {
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-4">
           {/* Position tabs */}
-          <div className="flex gap-1 mb-4 flex-wrap">
+          <div className="flex gap-1 mb-3 flex-wrap">
             {ALL_POSITIONS.map((pos) => (
               <button
                 key={pos}
@@ -92,10 +101,30 @@ export default function RangeEditorModal({ onClose }: RangeEditorModalProps) {
             ))}
           </div>
 
+          {/* Scenario tabs */}
+          <div className="flex gap-1 mb-4 flex-wrap">
+            {SCENARIOS.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setSelectedScenario(key)}
+                className={`
+                  px-3 py-1 text-xs font-medium rounded transition-colors
+                  ${key === selectedScenario
+                    ? 'bg-teal-600 text-white'
+                    : 'bg-gray-800 text-gray-500 hover:text-white hover:bg-gray-700'}
+                `}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           {/* Range info */}
           <div className="flex items-center justify-between mb-3">
             <div className="text-sm text-gray-300">
               <span className="font-bold">{selectedPosition}</span>
+              {' — '}
+              <span className="text-teal-400">{SCENARIOS.find((s) => s.key === selectedScenario)?.label}</span>
               {' — '}
               <span className="text-gray-400">{rangePercentage(currentRange).toFixed(1)}% of hands</span>
             </div>
