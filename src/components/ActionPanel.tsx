@@ -37,7 +37,7 @@ export default function ActionPanel() {
   };
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40">
+    <div className="fixed bottom-4 right-4 z-40">
       <div className="bg-gray-900/95 border border-gray-700 rounded-xl p-4 shadow-2xl backdrop-blur-sm">
         <div className="text-xs text-gray-400 mb-2 text-center">
           <span className="font-bold text-yellow-400">{activePlayer.position}</span>
