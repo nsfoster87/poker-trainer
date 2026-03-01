@@ -39,7 +39,8 @@ export interface GameState {
   street: Street;
   pot: number;
   communityCards: Card[];
-  activePlayerIndex: number | null;
+  activePosition: Position | null;
+  lastRaiserPosition: Position | null;
   dealerSeatIndex: number;
   players: Player[];
 }

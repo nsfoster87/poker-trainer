@@ -1,4 +1,5 @@
 import { useGameStore } from '../store/gameStore';
+import { useActivePlayerSeat } from '../store/gameSelectors';
 import { useRangeStore } from '../store/rangeStore';
 import { rangePercentage } from '../data/defaultRanges';
 import { resolveScenario, getPriorActions } from '../utils/rangeResolver';
@@ -28,7 +29,7 @@ export default function RangeSidebar() {
   const cardPickerMode = useGameStore((s) => s.cardPickerMode);
   const dealerSeatIndex = useGameStore((s) => s.dealerSeatIndex);
   const seatCount = useGameStore((s) => s.settings.seatCount);
-  const activePlayerIndex = useGameStore((s) => s.activePlayerIndex);
+  const activePlayerSeat = useActivePlayerSeat();
   const getRange = useRangeStore((s) => s.getRange);
 
   if (street === 'idle') return PLACEHOLDER_UI;
@@ -44,8 +45,8 @@ export default function RangeSidebar() {
     activePlayers.some((p) => p.seatIndex === seat),
   );
 
-  const idx = activePlayerIndex != null
-    ? activeSeatsInActionOrder.indexOf(activePlayerIndex)
+  const idx = activePlayerSeat != null
+    ? activeSeatsInActionOrder.indexOf(activePlayerSeat)
     : -1;
   const N = activeSeatsInActionOrder.length;
   const startIndex =
@@ -85,7 +86,7 @@ export default function RangeSidebar() {
             key={player.seatIndex}
             className={`
               p-2 rounded-lg border
-              ${player.seatIndex === activePlayerIndex
+              ${player.seatIndex === activePlayerSeat
                 ? 'border-yellow-400 bg-yellow-900/20'
                 : player.isUser
                   ? 'border-blue-500/50 bg-blue-900/20'

@@ -46,6 +46,19 @@ export function assignPositions(
 }
 
 /**
+ * Return the seat index that has the given position, or null if none.
+ */
+export function findSeatByPosition(
+  posMap: Map<number, Position>,
+  position: Position,
+): number | null {
+  for (const [seat, pos] of posMap) {
+    if (pos === position) return seat;
+  }
+  return null;
+}
+
+/**
  * Get the pre-flop action order as seat indices.
  * Pre-flop: UTG first, BB last.
  */

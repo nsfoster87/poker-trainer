@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useGameStore } from '../store/gameStore';
+import { useActivePlayerSeat } from '../store/gameSelectors';
 import { computeSeatPositions, getSeatAngle } from '../utils/seatLayout';
 import Seat from './Seat';
 import ContextMenu from './ContextMenu';
@@ -14,7 +15,7 @@ interface MenuState {
 export default function PokerTable() {
   const players = useGameStore((s) => s.players);
   const dealerSeatIndex = useGameStore((s) => s.dealerSeatIndex);
-  const activePlayerIndex = useGameStore((s) => s.activePlayerIndex);
+  const activePlayerSeat = useActivePlayerSeat();
   const seatCount = useGameStore((s) => s.settings.seatCount);
   const street = useGameStore((s) => s.street);
   const setDealerSeat = useGameStore((s) => s.setDealerSeat);
@@ -57,7 +58,7 @@ export default function PokerTable() {
 
   const isDealt = street !== 'idle';
   const activePlayers = players.filter((p) => !p.hasFolded);
-  const roundComplete = isDealt && activePlayerIndex === null && activePlayers.length > 1;
+  const roundComplete = isDealt && activePlayerSeat === null && activePlayers.length > 1;
   const canAdvance = street === 'preflop' || street === 'flop' || street === 'turn';
   const showAdvance = roundComplete && canAdvance;
 
@@ -84,12 +85,12 @@ export default function PokerTable() {
                 {street === 'preflop' ? 'Deal Flop' : street === 'flop' ? 'Deal Turn' : 'Deal River'}
               </button>
             )}
-            {isDealt && activePlayerIndex === null && activePlayers.length <= 1 && (
+            {isDealt && activePlayerSeat === null && activePlayers.length <= 1 && (
               <div className="text-sm text-green-400 font-bold bg-black/40 px-3 py-1 rounded-full">
                 Hand complete — all folded
               </div>
             )}
-            {street === 'river' && activePlayerIndex === null && activePlayers.length > 1 && (
+            {street === 'river' && activePlayerSeat === null && activePlayers.length > 1 && (
               <div className="text-sm text-green-400 font-bold bg-black/40 px-3 py-1 rounded-full">
                 Hand complete — showdown
               </div>
@@ -106,7 +107,7 @@ export default function PokerTable() {
             key={player.seatIndex}
             player={player}
             isDealer={player.seatIndex === dealerSeatIndex}
-            isActive={player.seatIndex === activePlayerIndex}
+            isActive={player.seatIndex === activePlayerSeat}
             isDealt={isDealt}
             angle={getSeatAngle(player.seatIndex, seatCount)}
             onContextMenu={(e) => handleSeatContextMenu(player.seatIndex, e)}

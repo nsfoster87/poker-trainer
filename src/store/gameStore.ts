@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import type { Player, Street, Card, Settings, ActionRecord } from '../types';
-import { assignPositions, getPreflopActionOrder } from '../utils/positions';
+import type { Player, Street, Card, Settings, ActionRecord, Position } from '../types';
+import { assignPositions, findSeatByPosition, getPreflopActionOrder } from '../utils/positions';
 import { cardKey } from '../utils/deck';
 import { findNextActivePlayer, getFirstToAct } from './actionLogic';
 
@@ -11,10 +11,10 @@ interface GameStore {
   street: Street;
   pot: number;
   communityCards: Card[];
-  activePlayerIndex: number | null;
+  activePosition: Position | null;
+  lastRaiserPosition: Position | null;
   dealerSeatIndex: number;
   players: Player[];
-  lastRaiserSeat: number | null;
 
   usedCardKeys: Set<string>;
   cardPickerOpen: boolean;
@@ -85,10 +85,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   street: 'idle',
   pot: 0,
   communityCards: [],
-  activePlayerIndex: null,
+  activePosition: null,
+  lastRaiserPosition: null,
   dealerSeatIndex: 4,
   players: buildPlayers(DEFAULT_SETTINGS, 4),
-  lastRaiserSeat: null,
   usedCardKeys: new Set(),
   cardPickerOpen: false,
   cardPickerMode: null,
@@ -105,44 +105,34 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     const players = buildPlayers(newSettings, get().dealerSeatIndex);
-    set({ settings: newSettings, players, street: 'idle', pot: 0, communityCards: [], activePlayerIndex: null, usedCardKeys: new Set(), lastRaiserSeat: null });
+    set({ settings: newSettings, players, street: 'idle', pot: 0, communityCards: [], activePosition: null, lastRaiserPosition: null, usedCardKeys: new Set() });
   },
 
   setDealerSeat: (seatIndex) => {
     const players = buildPlayers(get().settings, seatIndex);
-    set({ dealerSeatIndex: seatIndex, players, street: 'idle', pot: 0, communityCards: [], activePlayerIndex: null, usedCardKeys: new Set(), lastRaiserSeat: null });
+    set({ dealerSeatIndex: seatIndex, players, street: 'idle', pot: 0, communityCards: [], activePosition: null, lastRaiserPosition: null, usedCardKeys: new Set() });
   },
 
   setUserSeat: (seatIndex) => {
-    const { settings, dealerSeatIndex, players, street } = get();
+    const { settings, dealerSeatIndex, players } = get();
     const n = settings.seatCount;
     if (seatIndex < 0 || seatIndex >= n) return;
     if (seatIndex === settings.userSeatIndex) return;
 
-    if (street === 'idle') {
-      const posMap = assignPositions(dealerSeatIndex, n);
-      const oldUserSeat = settings.userSeatIndex;
-      const oldOffset = (oldUserSeat - dealerSeatIndex + n) % n;
-      const newDealer = (seatIndex - oldOffset + n) % n;
-      const newPosMap = assignPositions(newDealer, n);
-      const updatedPlayers = players.map((p) => ({
-        ...p,
-        position: newPosMap.get(p.seatIndex)!,
-        isUser: p.seatIndex === seatIndex,
-      }));
-      set({
-        dealerSeatIndex: newDealer,
-        settings: { ...settings, userSeatIndex: seatIndex },
-        players: updatedPlayers,
-      });
-    } else {
-      const newSettings = { ...settings, userSeatIndex: seatIndex };
-      const updatedPlayers = players.map((p) => ({
-        ...p,
-        isUser: p.seatIndex === seatIndex,
-      }));
-      set({ settings: newSettings, players: updatedPlayers });
-    }
+    const oldUserSeat = settings.userSeatIndex;
+    const oldOffset = (oldUserSeat - dealerSeatIndex + n) % n;
+    const newDealer = (seatIndex - oldOffset + n) % n;
+    const newPosMap = assignPositions(newDealer, n);
+    const updatedPlayers = players.map((p) => ({
+      ...p,
+      position: newPosMap.get(p.seatIndex)!,
+      isUser: p.seatIndex === seatIndex,
+    }));
+    set({
+      dealerSeatIndex: newDealer,
+      settings: { ...settings, userSeatIndex: seatIndex },
+      players: updatedPlayers,
+    });
   },
 
   setPlayerStack: (seatIndex, stack) => {
@@ -156,7 +146,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { dealerSeatIndex, settings } = get();
     const newDealer = (dealerSeatIndex + 1) % settings.seatCount;
     const players = buildPlayers(settings, newDealer);
-    set({ dealerSeatIndex: newDealer, players, street: 'idle', pot: 0, communityCards: [], activePlayerIndex: null, usedCardKeys: new Set(), lastRaiserSeat: null });
+    set({ dealerSeatIndex: newDealer, players, street: 'idle', pot: 0, communityCards: [], activePosition: null, lastRaiserPosition: null, usedCardKeys: new Set() });
   },
 
   initializePlayers: () => {
@@ -195,11 +185,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
       street: 'preflop',
       pot,
       communityCards: [],
-      activePlayerIndex: null,
+      activePosition: null,
+      lastRaiserPosition: null,
       usedCardKeys: new Set(),
       cardPickerOpen: true,
       cardPickerMode: 'hole',
-      lastRaiserSeat: null,
     });
   },
 
@@ -209,8 +199,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     );
 
     const { dealerSeatIndex, settings } = get();
+    const posMap = assignPositions(dealerSeatIndex, settings.seatCount);
     const preflopOrder = getPreflopActionOrder(dealerSeatIndex, settings.seatCount);
-    const firstToAct = preflopOrder[0];
+    const firstToActSeat = preflopOrder[0];
+    const firstToActPosition = posMap.get(firstToActSeat) ?? null;
 
     const usedCardKeys = computeUsedCards(players, get().communityCards);
     set({
@@ -218,7 +210,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       usedCardKeys,
       cardPickerOpen: false,
       cardPickerMode: null,
-      activePlayerIndex: firstToAct,
+      activePosition: firstToActPosition,
     });
   },
 
@@ -238,9 +230,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       street: 'idle',
       pot: 0,
       communityCards: [],
-      activePlayerIndex: null,
+      activePosition: null,
+      lastRaiserPosition: null,
       usedCardKeys: new Set(),
-      lastRaiserSeat: null,
       cardPickerOpen: false,
       cardPickerMode: null,
     });
@@ -257,7 +249,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       currentBet: 0,
       actionHistory: [] as ActionRecord[],
     }));
-    const firstToAct = getFirstToAct(players, state.dealerSeatIndex, state.settings.seatCount, state.street);
+    const posMap = assignPositions(state.dealerSeatIndex, state.settings.seatCount);
+    const firstToActSeat = getFirstToAct(players, state.dealerSeatIndex, state.settings.seatCount, state.street);
+    const firstToActPosition = firstToActSeat != null ? posMap.get(firstToActSeat) ?? null : null;
 
     set({
       communityCards,
@@ -265,8 +259,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       cardPickerOpen: false,
       cardPickerMode: null,
       players,
-      activePlayerIndex: firstToAct,
-      lastRaiserSeat: null,
+      activePosition: firstToActPosition,
+      lastRaiserPosition: null,
     });
   },
 
@@ -280,7 +274,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     player.actionHistory = [...player.actionHistory, record];
 
     let potDelta = 0;
-    let newLastRaiser = state.lastRaiserSeat;
+    let newLastRaiserPosition: Position | null = state.lastRaiserPosition;
 
     if (action === 'fold') {
       player.hasFolded = true;
@@ -297,29 +291,37 @@ export const useGameStore = create<GameStore>((set, get) => ({
       player.stack -= additional;
       potDelta = additional;
       player.currentBet = raiseTotal;
-      newLastRaiser = seatIndex;
+      newLastRaiserPosition = player.position;
     }
+
+    const posMap = assignPositions(state.dealerSeatIndex, state.settings.seatCount);
+    const lastRaiserSeat =
+      state.lastRaiserPosition != null
+        ? findSeatByPosition(posMap, state.lastRaiserPosition)
+        : null;
 
     // Check if only one player remains
     const activePlayers = players.filter((p) => !p.hasFolded);
-    let nextActive: number | null = null;
+    let nextActiveSeat: number | null = null;
 
     if (activePlayers.length > 1) {
-      nextActive = findNextActivePlayer(
+      nextActiveSeat = findNextActivePlayer(
         seatIndex,
         players,
         state.dealerSeatIndex,
         state.settings.seatCount,
         state.street,
-        newLastRaiser,
+        action === 'raise' ? seatIndex : lastRaiserSeat,
       );
     }
+
+    const nextActivePosition = nextActiveSeat != null ? posMap.get(nextActiveSeat) ?? null : null;
 
     set({
       players,
       pot: state.pot + potDelta,
-      activePlayerIndex: nextActive,
-      lastRaiserSeat: newLastRaiser,
+      activePosition: nextActivePosition,
+      lastRaiserPosition: newLastRaiserPosition,
     });
   },
 
@@ -336,10 +338,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     set({
       street: transition.next,
-      activePlayerIndex: null,
+      activePosition: null,
+      lastRaiserPosition: null,
       cardPickerOpen: true,
       cardPickerMode: transition.pickerMode,
-      lastRaiserSeat: null,
     });
   },
 
@@ -353,11 +355,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
       street: 'idle',
       pot: 0,
       communityCards: [],
-      activePlayerIndex: null,
+      activePosition: null,
+      lastRaiserPosition: null,
       usedCardKeys: new Set(),
       cardPickerOpen: false,
       cardPickerMode: null,
-      lastRaiserSeat: null,
     });
   },
 }));

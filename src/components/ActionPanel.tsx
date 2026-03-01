@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
+import { useActivePlayerSeat } from '../store/gameSelectors';
 import BetSizer from './BetSizer';
 
 export default function ActionPanel() {
-  const activePlayerIndex = useGameStore((s) => s.activePlayerIndex);
+  const activePlayerSeat = useActivePlayerSeat();
   const players = useGameStore((s) => s.players);
   const pot = useGameStore((s) => s.pot);
   const settings = useGameStore((s) => s.settings);
@@ -11,9 +12,9 @@ export default function ActionPanel() {
 
   const [showRaiseSizer, setShowRaiseSizer] = useState(false);
 
-  if (activePlayerIndex === null) return null;
+  if (activePlayerSeat === null) return null;
 
-  const activePlayer = players.find((p) => p.seatIndex === activePlayerIndex);
+  const activePlayer = players.find((p) => p.seatIndex === activePlayerSeat);
   if (!activePlayer) return null;
 
   const { stackDisplayMode, bigBlind } = settings;
@@ -28,17 +29,17 @@ export default function ActionPanel() {
   const maxBet = activePlayer.currentBet + activePlayer.stack;
 
   const handleFold = () => {
-    playerAction(activePlayerIndex, 'fold');
+    playerAction(activePlayerSeat, 'fold');
     setShowRaiseSizer(false);
   };
 
   const handleCall = () => {
-    playerAction(activePlayerIndex, 'call', highestBet);
+    playerAction(activePlayerSeat, 'call', highestBet);
     setShowRaiseSizer(false);
   };
 
   const handleRaiseConfirm = (amount: number) => {
-    playerAction(activePlayerIndex, 'raise', amount);
+    playerAction(activePlayerSeat, 'raise', amount);
     setShowRaiseSizer(false);
   };
 
