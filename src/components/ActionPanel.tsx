@@ -16,6 +16,12 @@ export default function ActionPanel() {
   const activePlayer = players.find((p) => p.seatIndex === activePlayerIndex);
   if (!activePlayer) return null;
 
+  const { stackDisplayMode, bigBlind } = settings;
+  const formatAmount = (value: number) =>
+    stackDisplayMode === 'bb'
+      ? `${(value / bigBlind).toFixed(2)} BB`
+      : `$${value.toLocaleString()}`;
+
   const highestBet = Math.max(...players.map((p) => p.currentBet));
   const callAmount = highestBet - activePlayer.currentBet;
   const minRaise = highestBet + settings.bigBlind;
@@ -41,7 +47,7 @@ export default function ActionPanel() {
       <div className="bg-gray-900/95 border border-gray-700 rounded-xl p-4 shadow-2xl backdrop-blur-sm">
         <div className="text-xs text-gray-400 mb-2 text-center">
           <span className="font-bold text-yellow-400">{activePlayer.position}</span>
-          {' '}to act — Stack: {activePlayer.stack}
+          {' '}to act — Stack: {formatAmount(activePlayer.stack)}
         </div>
 
         {showRaiseSizer ? (
@@ -49,6 +55,8 @@ export default function ActionPanel() {
             minRaise={minRaise}
             maxBet={maxBet}
             pot={pot}
+            stackDisplayMode={stackDisplayMode}
+            bigBlind={bigBlind}
             onConfirm={handleRaiseConfirm}
             onCancel={() => setShowRaiseSizer(false)}
           />
@@ -64,7 +72,7 @@ export default function ActionPanel() {
               onClick={handleCall}
               className="px-6 py-2.5 bg-green-700 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors"
             >
-              {callAmount > 0 ? `Call ${callAmount}` : 'Check'}
+              {callAmount > 0 ? `Call ${formatAmount(callAmount)}` : 'Check'}
             </button>
             <button
               onClick={() => setShowRaiseSizer(true)}

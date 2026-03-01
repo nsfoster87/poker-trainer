@@ -94,6 +94,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   updateSettings: (patch) => {
     const newSettings = { ...get().settings, ...patch };
+    const displayOnlyKeys: (keyof Settings)[] = ['stackDisplayMode'];
+    const patchKeys = Object.keys(patch) as (keyof Settings)[];
+    const onlyDisplayOnly =
+      patchKeys.length > 0 &&
+      patchKeys.every((k) => displayOnlyKeys.includes(k));
+    if (onlyDisplayOnly) {
+      set({ settings: newSettings });
+      return;
+    }
     const players = buildPlayers(newSettings, get().dealerSeatIndex);
     set({ settings: newSettings, players, street: 'idle', pot: 0, communityCards: [], activePlayerIndex: null, usedCardKeys: new Set(), lastRaiserSeat: null });
   },
