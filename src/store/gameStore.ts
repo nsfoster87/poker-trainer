@@ -22,6 +22,7 @@ interface GameStore {
 
   setDealerSeat: (seatIndex: number) => void;
   setUserSeat: (seatIndex: number) => void;
+  setPlayerStack: (seatIndex: number, stack: number) => void;
   rotateDealerLeft: () => void;
   initializePlayers: () => void;
   deal: () => void;
@@ -105,6 +106,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const newSettings = { ...get().settings, userSeatIndex: seatIndex };
     const players = buildPlayers(newSettings, get().dealerSeatIndex);
     set({ settings: newSettings, players });
+  },
+
+  setPlayerStack: (seatIndex, stack) => {
+    const players = get().players.map((p) =>
+      p.seatIndex === seatIndex ? { ...p, stack: Math.max(0, stack) } : p
+    );
+    set({ players });
   },
 
   rotateDealerLeft: () => {

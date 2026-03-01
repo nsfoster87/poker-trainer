@@ -36,6 +36,16 @@ export default function BlindsEditor() {
           className="w-16 bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm text-white text-center"
         />
       </div>
+      <div className="flex items-center gap-2">
+        <label className="text-sm text-gray-400">Stack (BB):</label>
+        <input
+          type="number"
+          min={1}
+          value={settings.defaultStacks}
+          onChange={(e) => updateSettings({ defaultStacks: Math.max(1, Number(e.target.value)) })}
+          className="w-16 bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm text-white text-center"
+        />
+      </div>
     </div>
   );
 }

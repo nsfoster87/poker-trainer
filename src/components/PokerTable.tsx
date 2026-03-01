@@ -19,6 +19,7 @@ export default function PokerTable() {
   const street = useGameStore((s) => s.street);
   const setDealerSeat = useGameStore((s) => s.setDealerSeat);
   const setUserSeat = useGameStore((s) => s.setUserSeat);
+  const setPlayerStack = useGameStore((s) => s.setPlayerStack);
   const pot = useGameStore((s) => s.pot);
   const communityCards = useGameStore((s) => s.communityCards);
   const advanceToNextStreet = useGameStore((s) => s.advanceToNextStreet);
@@ -34,6 +35,17 @@ export default function PokerTable() {
     ? [
         { label: 'Sit Here', onClick: () => setUserSeat(menu.seatIndex) },
         { label: 'Set Dealer', onClick: () => setDealerSeat(menu.seatIndex) },
+        {
+          label: 'Set stack…',
+          onClick: () => {
+            const raw = prompt('Stack amount:');
+            const value = raw !== null ? Number(raw) : NaN;
+            if (!Number.isNaN(value) && value >= 0) {
+              setPlayerStack(menu.seatIndex, value);
+            }
+            setMenu(null);
+          },
+        },
       ]
     : [];
 
