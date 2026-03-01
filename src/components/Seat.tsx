@@ -14,7 +14,7 @@ interface SeatProps {
   onContextMenu: (e: React.MouseEvent) => void;
 }
 
-const BET_OFFSET_PX = 78;
+const BET_OFFSET_PX = 95;
 
 export default function Seat({ player, isDealer, isActive, isDealt, angle, style, onContextMenu }: SeatProps) {
   const stackDisplayMode = useGameStore((s) => s.settings.stackDisplayMode);
