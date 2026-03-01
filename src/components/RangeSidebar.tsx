@@ -47,11 +47,14 @@ export default function RangeSidebar() {
   const idx = activePlayerIndex != null
     ? activeSeatsInActionOrder.indexOf(activePlayerIndex)
     : -1;
+  const N = activeSeatsInActionOrder.length;
+  const startIndex =
+    idx >= 0 ? (idx === 0 ? 0 : (idx - 1 + N) % N) : 0;
   const displayOrder =
     idx >= 0
       ? [
-          ...activeSeatsInActionOrder.slice(idx),
-          ...activeSeatsInActionOrder.slice(0, idx),
+          ...activeSeatsInActionOrder.slice(startIndex),
+          ...activeSeatsInActionOrder.slice(0, startIndex),
         ]
       : activeSeatsInActionOrder;
 
