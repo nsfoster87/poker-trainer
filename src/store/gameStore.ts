@@ -46,7 +46,7 @@ function buildPlayers(settings: Settings, dealerSeatIndex: number): Player[] {
       cards: null,
       hasFolded: false,
       currentBet: 0,
-      stack: settings.defaultStacks * settings.bigBlind,
+      stack: settings.defaultStacks,
       isUser: i === settings.userSeatIndex,
       actionHistory: [] as ActionRecord[],
     });
@@ -75,7 +75,7 @@ const DEFAULT_SETTINGS: Settings = {
   smallBlind: 1,
   bigBlind: 2,
   ante: 0,
-  defaultStacks: 100,
+  defaultStacks: 200,
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({
