@@ -42,7 +42,7 @@ export default function Seat({ player, isDealer, isActive, isDealt, angle, style
       }}
     >
       {isDealt && !player.hasFolded && (
-        <div className="mb-1">
+        <div className="-mb-5 flex justify-center">
           <PlayerCards cards={player.cards} faceUp={player.isUser && !!player.cards} />
         </div>
       )}

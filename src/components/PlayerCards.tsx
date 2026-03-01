@@ -24,11 +24,9 @@ function CardBack() {
 }
 
 export default function PlayerCards({ cards, faceUp }: PlayerCardsProps) {
-  if (!cards) return null;
-
   return (
     <div className="flex gap-0.5">
-      {faceUp ? (
+      {faceUp && cards ? (
         <>
           <CardFace card={cards[0]} />
           <CardFace card={cards[1]} />
