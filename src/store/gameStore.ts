@@ -114,9 +114,35 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   setUserSeat: (seatIndex) => {
-    const newSettings = { ...get().settings, userSeatIndex: seatIndex };
-    const players = buildPlayers(newSettings, get().dealerSeatIndex);
-    set({ settings: newSettings, players });
+    const { settings, dealerSeatIndex, players, street } = get();
+    const n = settings.seatCount;
+    if (seatIndex < 0 || seatIndex >= n) return;
+    if (seatIndex === settings.userSeatIndex) return;
+
+    if (street === 'idle') {
+      const posMap = assignPositions(dealerSeatIndex, n);
+      const oldUserSeat = settings.userSeatIndex;
+      const oldOffset = (oldUserSeat - dealerSeatIndex + n) % n;
+      const newDealer = (seatIndex - oldOffset + n) % n;
+      const newPosMap = assignPositions(newDealer, n);
+      const updatedPlayers = players.map((p) => ({
+        ...p,
+        position: newPosMap.get(p.seatIndex)!,
+        isUser: p.seatIndex === seatIndex,
+      }));
+      set({
+        dealerSeatIndex: newDealer,
+        settings: { ...settings, userSeatIndex: seatIndex },
+        players: updatedPlayers,
+      });
+    } else {
+      const newSettings = { ...settings, userSeatIndex: seatIndex };
+      const updatedPlayers = players.map((p) => ({
+        ...p,
+        isUser: p.seatIndex === seatIndex,
+      }));
+      set({ settings: newSettings, players: updatedPlayers });
+    }
   },
 
   setPlayerStack: (seatIndex, stack) => {
