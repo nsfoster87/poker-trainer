@@ -51,4 +51,5 @@ export interface Settings {
   bigBlind: number;
   ante: number;
   defaultStacks: number;
+  stackDisplayMode: 'cash' | 'bb';
 }

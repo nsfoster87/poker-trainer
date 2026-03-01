@@ -76,6 +76,7 @@ const DEFAULT_SETTINGS: Settings = {
   bigBlind: 2,
   ante: 0,
   defaultStacks: 200,
+  stackDisplayMode: 'cash',
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({

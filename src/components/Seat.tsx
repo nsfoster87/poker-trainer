@@ -1,4 +1,5 @@
 import type { Player } from '../types';
+import { useGameStore } from '../store/gameStore';
 import DealerChip from './DealerChip';
 import PlayerCards from './PlayerCards';
 import BetDisplay from './BetDisplay';
@@ -13,6 +14,18 @@ interface SeatProps {
 }
 
 export default function Seat({ player, isDealer, isActive, isDealt, style, onContextMenu }: SeatProps) {
+  const stackDisplayMode = useGameStore((s) => s.settings.stackDisplayMode);
+  const bigBlind = useGameStore((s) => s.settings.bigBlind);
+  const updateSettings = useGameStore((s) => s.updateSettings);
+
+  const formattedStack =
+    stackDisplayMode === 'bb'
+      ? `${(player.stack / bigBlind).toFixed(2)} BB`
+      : `$${player.stack.toLocaleString()}`;
+
+  const toggleDisplayMode = () =>
+    updateSettings({ stackDisplayMode: stackDisplayMode === 'cash' ? 'bb' : 'cash' });
+
   return (
     <div
       className="absolute flex flex-col items-center -translate-x-1/2 -translate-y-1/2"
@@ -47,8 +60,12 @@ export default function Seat({ player, isDealer, isActive, isDealt, style, onCon
       >
         {player.position}
       </div>
-      <div className="mt-1 text-xs text-gray-300 bg-gray-900/70 px-2 py-0.5 rounded whitespace-nowrap">
-        {player.stack}
+      <div
+        className="mt-1 text-xs text-gray-300 bg-gray-900/70 px-2 py-0.5 rounded whitespace-nowrap cursor-pointer select-none"
+        onDoubleClick={toggleDisplayMode}
+        title="Double-click to toggle BB/cash"
+      >
+        {formattedStack}
       </div>
 
       {/* Current bet */}
