@@ -29,6 +29,7 @@ interface GameStore {
   setUserHoleCards: (cards: [Card, Card]) => void;
   openCardPicker: (mode: 'hole' | 'flop' | 'turn' | 'river') => void;
   closeCardPicker: () => void;
+  cancelDeal: () => void;
   setCommunityCards: (cards: Card[]) => void;
   playerAction: (seatIndex: number, action: 'fold' | 'call' | 'raise', amount?: number) => void;
   advanceToNextStreet: () => void;
@@ -201,6 +202,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   closeCardPicker: () => {
     set({ cardPickerOpen: false, cardPickerMode: null });
+  },
+
+  cancelDeal: () => {
+    const { settings, dealerSeatIndex } = get();
+    const players = buildPlayers(settings, dealerSeatIndex);
+    set({
+      players,
+      street: 'idle',
+      pot: 0,
+      communityCards: [],
+      activePlayerIndex: null,
+      usedCardKeys: new Set(),
+      lastRaiserSeat: null,
+      cardPickerOpen: false,
+      cardPickerMode: null,
+    });
   },
 
   setCommunityCards: (newCards) => {

@@ -15,6 +15,7 @@ export default function App() {
   const usedCardKeys = useGameStore((s) => s.usedCardKeys);
   const setUserHoleCards = useGameStore((s) => s.setUserHoleCards);
   const closeCardPicker = useGameStore((s) => s.closeCardPicker);
+  const cancelDeal = useGameStore((s) => s.cancelDeal);
   const setCommunityCards = useGameStore((s) => s.setCommunityCards);
 
   const [selectedCards, setSelectedCards] = useState<Card[]>([]);
@@ -49,8 +50,12 @@ export default function App() {
 
   const handleCancel = useCallback(() => {
     setSelectedCards([]);
-    closeCardPicker();
-  }, [closeCardPicker]);
+    if (cardPickerMode === 'hole') {
+      cancelDeal();
+    } else {
+      closeCardPicker();
+    }
+  }, [cardPickerMode, cancelDeal, closeCardPicker]);
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
