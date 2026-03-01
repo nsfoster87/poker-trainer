@@ -22,7 +22,14 @@ export default function RangeSidebar() {
   const activePlayerIndex = useGameStore((s) => s.activePlayerIndex);
   const getRange = useRangeStore((s) => s.getRange);
 
-  if (street === 'idle') return null;
+  if (street === 'idle') {
+    return (
+      <div className="w-64 bg-gray-900/80 border-r border-gray-700 overflow-y-auto p-3 space-y-3">
+        <h2 className="text-sm font-bold text-gray-300 uppercase tracking-wide">Hand Ranges</h2>
+        <p className="text-xs text-gray-500">Deal to see ranges</p>
+      </div>
+    );
+  }
 
   const actionOrder = street === 'preflop'
     ? getPreflopActionOrder(dealerSeatIndex, seatCount)
