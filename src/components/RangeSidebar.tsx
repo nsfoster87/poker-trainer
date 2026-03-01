@@ -29,12 +29,30 @@ export default function RangeSidebar() {
     : getPostflopActionOrder(dealerSeatIndex, seatCount);
 
   const activePlayers = players.filter((p) => !p.hasFolded);
+  const activeSeatsInActionOrder = actionOrder.filter((seat) =>
+    activePlayers.some((p) => p.seatIndex === seat),
+  );
+
+  const idx = activePlayerIndex != null
+    ? activeSeatsInActionOrder.indexOf(activePlayerIndex)
+    : -1;
+  const displayOrder =
+    idx >= 0
+      ? [
+          ...activeSeatsInActionOrder.slice(idx),
+          ...activeSeatsInActionOrder.slice(0, idx),
+        ]
+      : activeSeatsInActionOrder;
+
+  const playerBySeat = new Map(players.map((p) => [p.seatIndex, p]));
 
   return (
     <div className="w-64 bg-gray-900/80 border-r border-gray-700 overflow-y-auto p-3 space-y-3">
       <h2 className="text-sm font-bold text-gray-300 uppercase tracking-wide">Hand Ranges</h2>
 
-      {activePlayers.map((player) => {
+      {displayOrder.map((seatIndex) => {
+        const player = playerBySeat.get(seatIndex);
+        if (!player || player.hasFolded) return null;
         const priorActions = getPriorActions(
           players.map((p) => ({ seatIndex: p.seatIndex, actionHistory: p.actionHistory })),
           actionOrder,
