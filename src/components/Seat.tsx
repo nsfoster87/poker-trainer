@@ -42,12 +42,12 @@ export default function Seat({ player, isDealer, isActive, isDealt, angle, style
       }}
     >
       {isDealt && !player.hasFolded && (
-        <div className="-mb-5 flex justify-center">
+        <div className={`-mb-5 flex justify-center ${player.isUser ? 'relative z-10' : 'relative z-0'}`}>
           <PlayerCards cards={player.cards} faceUp={player.isUser && !!player.cards} />
         </div>
       )}
 
-      <div className="relative">
+      <div className={`relative ${player.isUser ? 'z-0' : 'z-10'}`}>
         {isDealer && (
           <div className="absolute -top-1 -right-1 z-10">
             <DealerChip />
