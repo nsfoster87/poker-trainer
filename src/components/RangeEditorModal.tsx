@@ -62,19 +62,19 @@ export default function RangeEditorModal({ onClose }: RangeEditorModalProps) {
           <div className="flex gap-2">
             <button
               onClick={handleReset}
-              className="px-3 py-1.5 text-sm text-gray-400 hover:text-white border border-gray-600 rounded transition-colors"
+              className="px-3 py-1.5 text-sm text-gray-400 hover:text-white border border-gray-600 rounded transition-colors cursor-pointer"
             >
               Reset All
             </button>
             <button
               onClick={handleSave}
-              className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded transition-colors"
+              className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded transition-colors cursor-pointer"
             >
               Save & Close
             </button>
             <button
               onClick={onClose}
-              className="px-3 py-1.5 text-sm text-gray-400 hover:text-white transition-colors"
+              className="px-3 py-1.5 text-sm text-gray-400 hover:text-white transition-colors cursor-pointer"
             >
               Cancel
             </button>
@@ -108,7 +108,7 @@ export default function RangeEditorModal({ onClose }: RangeEditorModalProps) {
                 key={key}
                 onClick={() => setSelectedScenario(key)}
                 className={`
-                  px-3 py-1 text-xs font-medium rounded transition-colors
+                  px-3 py-1 text-xs font-medium rounded transition-colors cursor-pointer
                   ${key === selectedScenario
                     ? 'bg-teal-600 text-white'
                     : 'bg-gray-800 text-gray-500 hover:text-white hover:bg-gray-700'}
@@ -131,13 +131,13 @@ export default function RangeEditorModal({ onClose }: RangeEditorModalProps) {
             <div className="flex gap-2">
               <button
                 onClick={selectAll}
-                className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors"
+                className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors cursor-pointer"
               >
                 Select All
               </button>
               <button
                 onClick={clearRange}
-                className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors"
+                className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors cursor-pointer"
               >
                 Clear All
               </button>

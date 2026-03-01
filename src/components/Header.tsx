@@ -30,7 +30,7 @@ export default function Header({ onOpenRangeEditor }: HeaderProps) {
         </div>
         <button
           onClick={onOpenRangeEditor}
-          className="px-3 py-1.5 text-sm text-gray-300 hover:text-white border border-gray-600 hover:border-gray-500 rounded transition-colors"
+          className="px-3 py-1.5 text-sm text-gray-300 hover:text-white border border-gray-600 hover:border-gray-500 rounded transition-colors cursor-pointer"
         >
           Edit Ranges
         </button>
@@ -42,14 +42,14 @@ export default function Header({ onOpenRangeEditor }: HeaderProps) {
         {street === 'idle' && (
           <button
             onClick={deal}
-            className="px-4 py-2 bg-green-700 hover:bg-green-600 text-white text-sm font-medium rounded transition-colors"
+            className="px-4 py-2 bg-green-700 hover:bg-green-600 text-white text-sm font-medium rounded transition-colors cursor-pointer"
           >
             Deal
           </button>
         )}
         <button
           onClick={nextHand}
-          className="px-4 py-2 bg-amber-700 hover:bg-amber-600 text-white text-sm font-medium rounded transition-colors"
+          className="px-4 py-2 bg-amber-700 hover:bg-amber-600 text-white text-sm font-medium rounded transition-colors cursor-pointer"
         >
           Next Hand
         </button>

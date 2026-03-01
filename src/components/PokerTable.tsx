@@ -79,7 +79,7 @@ export default function PokerTable() {
             {showAdvance && (
               <button
                 onClick={advanceToNextStreet}
-                className="mt-1 px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded transition-colors"
+                className="mt-1 px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded transition-colors cursor-pointer"
               >
                 {street === 'preflop' ? 'Deal Flop' : street === 'flop' ? 'Deal Turn' : 'Deal River'}
               </button>

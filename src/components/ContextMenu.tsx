@@ -29,7 +29,7 @@ export default function ContextMenu({ x, y, onClose, options }: ContextMenuProps
       {options.map((opt) => (
         <button
           key={opt.label}
-          className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 transition-colors"
+          className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 transition-colors cursor-pointer"
           onClick={() => {
             opt.onClick();
             onClose();

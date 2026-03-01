@@ -74,14 +74,14 @@ export default function CardPickerModal({
         <div className="flex justify-end gap-3 mt-5">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors"
+            className="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             disabled={selectedCards.length !== maxSelections}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 disabled:text-gray-400 text-white text-sm font-medium rounded transition-colors"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors cursor-pointer"
           >
             Confirm
           </button>
