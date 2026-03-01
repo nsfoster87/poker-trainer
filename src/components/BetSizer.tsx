@@ -41,6 +41,17 @@ export default function BetSizer({
       ? `${(value / bigBlind).toFixed(2)} BB`
       : `$${value.toLocaleString()}`;
 
+  const inBB = stackDisplayMode === 'bb';
+  const displayMin = inBB ? minRaise / bigBlind : minRaise;
+  const displayMax = inBB ? maxBet / bigBlind : maxBet;
+  const displayValue = inBB ? amount / bigBlind : amount;
+  const displayStep = inBB ? 0.01 : 1;
+
+  const setAmountFromDisplay = (display: number) => {
+    const raw = inBB ? display * bigBlind : display;
+    setAmount(clamp(Math.round(raw * 100) / 100));
+  };
+
   return (
     <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 shadow-xl">
       <div className="flex gap-2 mb-3 flex-wrap">
@@ -48,7 +59,7 @@ export default function BetSizer({
           <button
             key={p.label}
             onClick={() => setAmount(clamp(p.value))}
-            className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs font-medium rounded transition-colors"
+            className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs font-medium rounded transition-colors cursor-pointer"
           >
             {p.label}
           </button>
@@ -58,32 +69,37 @@ export default function BetSizer({
       <div className="flex items-center gap-3 mb-3">
         <input
           type="range"
-          min={minRaise}
-          max={maxBet}
-          value={amount}
-          onChange={(e) => setAmount(Number(e.target.value))}
+          min={displayMin}
+          max={displayMax}
+          step={displayStep}
+          value={displayValue}
+          onChange={(e) => setAmountFromDisplay(Number(e.target.value))}
           className="flex-1 accent-blue-500"
         />
-        <input
-          type="number"
-          min={minRaise}
-          max={maxBet}
-          value={amount}
-          onChange={(e) => setAmount(clamp(Number(e.target.value)))}
-          className="w-20 bg-gray-900 border border-gray-600 rounded px-2 py-1 text-sm text-white text-center"
-        />
+        <div className="flex items-center gap-1">
+          <input
+            type="number"
+            min={displayMin}
+            max={displayMax}
+            step={displayStep}
+            value={displayValue}
+            onChange={(e) => setAmountFromDisplay(Number(e.target.value))}
+            className="w-20 bg-gray-900 border border-gray-600 rounded px-2 py-1 text-sm text-white text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+          {inBB && <span className="text-xs text-gray-400">BB</span>}
+        </div>
       </div>
 
       <div className="flex justify-end gap-2">
         <button
           onClick={onCancel}
-          className="px-3 py-1.5 text-sm text-gray-400 hover:text-white transition-colors"
+          className="px-3 py-1.5 text-sm text-gray-400 hover:text-white transition-colors cursor-pointer"
         >
           Cancel
         </button>
         <button
           onClick={() => onConfirm(amount)}
-          className="px-4 py-1.5 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded transition-colors"
+          className="px-4 py-1.5 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded transition-colors cursor-pointer"
         >
           Raise to {formatAmount(amount)}
         </button>

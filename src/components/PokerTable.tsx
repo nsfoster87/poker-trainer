@@ -21,8 +21,14 @@ export default function PokerTable() {
   const setUserSeat = useGameStore((s) => s.setUserSeat);
   const setPlayerStack = useGameStore((s) => s.setPlayerStack);
   const pot = useGameStore((s) => s.pot);
+  const settings = useGameStore((s) => s.settings);
   const communityCards = useGameStore((s) => s.communityCards);
   const advanceToNextStreet = useGameStore((s) => s.advanceToNextStreet);
+
+  const formatAmount = (value: number) =>
+    settings.stackDisplayMode === 'bb'
+      ? `${(value / settings.bigBlind).toFixed(2)} BB`
+      : `$${value.toLocaleString()}`;
   const seatPositions = computeSeatPositions(seatCount);
 
   const [menu, setMenu] = useState<MenuState | null>(null);
@@ -67,7 +73,7 @@ export default function PokerTable() {
             {communityCards.length > 0 && <CommunityCards cards={communityCards} />}
             {pot > 0 && (
               <div className="text-sm text-yellow-300 font-bold bg-black/40 px-3 py-1 rounded-full">
-                Pot: {pot}
+                Pot: {formatAmount(pot)}
               </div>
             )}
             {showAdvance && (

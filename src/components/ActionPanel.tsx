@@ -64,19 +64,19 @@ export default function ActionPanel() {
           <div className="flex gap-3">
             <button
               onClick={handleFold}
-              className="px-6 py-2.5 bg-gray-600 hover:bg-gray-500 text-white text-sm font-medium rounded-lg transition-colors"
+              className="px-6 py-2.5 bg-gray-600 hover:bg-gray-500 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
             >
               Fold
             </button>
             <button
               onClick={handleCall}
-              className="px-6 py-2.5 bg-green-700 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors"
+              className="px-6 py-2.5 bg-green-700 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
             >
               {callAmount > 0 ? `Call ${formatAmount(callAmount)}` : 'Check'}
             </button>
             <button
               onClick={() => setShowRaiseSizer(true)}
-              className="px-6 py-2.5 bg-red-700 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors"
+              className="px-6 py-2.5 bg-red-700 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
             >
               Raise
             </button>

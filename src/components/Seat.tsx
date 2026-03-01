@@ -56,7 +56,7 @@ export default function Seat({ player, isDealer, isActive, isDealt, angle, style
         <div
           className={`
             w-16 h-16 rounded-full flex items-center justify-center
-            border-2 text-sm font-bold select-none cursor-pointer transition-all
+            border-2 text-sm font-bold select-none transition-all
             ${player.isUser
               ? 'bg-blue-600 border-blue-400 text-white'
               : 'bg-gray-700 border-gray-500 text-gray-200'}
@@ -80,7 +80,7 @@ export default function Seat({ player, isDealer, isActive, isDealt, angle, style
       </div>
 
       <div
-        className="mt-1 text-xs text-gray-300 bg-gray-900/70 px-2 py-0.5 rounded whitespace-nowrap cursor-pointer select-none"
+        className="mt-1 text-xs text-gray-300 bg-gray-900/70 px-2 py-0.5 rounded whitespace-nowrap select-none"
         onDoubleClick={toggleDisplayMode}
         title="Double-click to toggle BB/cash"
       >
