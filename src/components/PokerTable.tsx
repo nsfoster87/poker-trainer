@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { computeSeatPositions } from '../utils/seatLayout';
+import { computeSeatPositions, getSeatAngle } from '../utils/seatLayout';
 import Seat from './Seat';
 import ContextMenu from './ContextMenu';
 import CommunityCards from './CommunityCards';
@@ -102,6 +102,7 @@ export default function PokerTable() {
             isDealer={player.seatIndex === dealerSeatIndex}
             isActive={player.seatIndex === activePlayerIndex}
             isDealt={isDealt}
+            angle={getSeatAngle(player.seatIndex, seatCount)}
             onContextMenu={(e) => handleSeatContextMenu(player.seatIndex, e)}
             style={{
               left: `${pos.x}%`,

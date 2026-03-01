@@ -12,6 +12,10 @@ export interface SeatPosition {
  *
  * Returns positions as percentages (0-100) for CSS placement.
  */
+export function getSeatAngle(seatIndex: number, seatCount: number): number {
+  return Math.PI / 2 - (2 * Math.PI * seatIndex) / seatCount;
+}
+
 export function computeSeatPositions(seatCount: number): SeatPosition[] {
   const positions: SeatPosition[] = [];
   const cx = 50;
@@ -21,7 +25,7 @@ export function computeSeatPositions(seatCount: number): SeatPosition[] {
   const ry = 42;
 
   for (let i = 0; i < seatCount; i++) {
-    const angle = Math.PI / 2 - (2 * Math.PI * i) / seatCount;
+    const angle = getSeatAngle(i, seatCount);
     positions.push({
       x: cx - rx * Math.cos(angle),
       y: cy + ry * Math.sin(angle),

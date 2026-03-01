@@ -9,11 +9,14 @@ interface SeatProps {
   isDealer: boolean;
   isActive: boolean;
   isDealt: boolean;
+  angle: number;
   style: React.CSSProperties;
   onContextMenu: (e: React.MouseEvent) => void;
 }
 
-export default function Seat({ player, isDealer, isActive, isDealt, style, onContextMenu }: SeatProps) {
+const BET_OFFSET_PX = 50;
+
+export default function Seat({ player, isDealer, isActive, isDealt, angle, style, onContextMenu }: SeatProps) {
   const stackDisplayMode = useGameStore((s) => s.settings.stackDisplayMode);
   const bigBlind = useGameStore((s) => s.settings.bigBlind);
   const updateSettings = useGameStore((s) => s.updateSettings);
@@ -26,6 +29,9 @@ export default function Seat({ player, isDealer, isActive, isDealt, style, onCon
   const toggleDisplayMode = () =>
     updateSettings({ stackDisplayMode: stackDisplayMode === 'cash' ? 'bb' : 'cash' });
 
+  const betDx = Math.cos(angle) * BET_OFFSET_PX;
+  const betDy = -Math.sin(angle) * BET_OFFSET_PX;
+
   return (
     <div
       className="absolute flex flex-col items-center -translate-x-1/2 -translate-y-1/2"
@@ -35,31 +41,44 @@ export default function Seat({ player, isDealer, isActive, isDealt, style, onCon
         onContextMenu(e);
       }}
     >
-      {/* Cards above the seat */}
       {isDealt && !player.hasFolded && (
         <div className="mb-1">
           <PlayerCards cards={player.cards} faceUp={player.isUser && !!player.cards} />
         </div>
       )}
 
-      {isDealer && (
-        <div className="absolute -top-1 -right-1 z-10">
-          <DealerChip />
+      <div className="relative">
+        {isDealer && (
+          <div className="absolute -top-1 -right-1 z-10">
+            <DealerChip />
+          </div>
+        )}
+        <div
+          className={`
+            w-16 h-16 rounded-full flex items-center justify-center
+            border-2 text-sm font-bold select-none cursor-pointer transition-all
+            ${player.isUser
+              ? 'bg-blue-600 border-blue-400 text-white'
+              : 'bg-gray-700 border-gray-500 text-gray-200'}
+            ${isActive ? 'ring-2 ring-yellow-400 ring-offset-2 ring-offset-green-900' : ''}
+            ${player.hasFolded ? 'opacity-40' : ''}
+          `}
+        >
+          {player.position}
         </div>
-      )}
-      <div
-        className={`
-          w-16 h-16 rounded-full flex items-center justify-center
-          border-2 text-sm font-bold select-none cursor-pointer transition-all
-          ${player.isUser
-            ? 'bg-blue-600 border-blue-400 text-white'
-            : 'bg-gray-700 border-gray-500 text-gray-200'}
-          ${isActive ? 'ring-2 ring-yellow-400 ring-offset-2 ring-offset-green-900' : ''}
-          ${player.hasFolded ? 'opacity-40' : ''}
-        `}
-      >
-        {player.position}
+
+        {player.currentBet > 0 && (
+          <div
+            className="absolute left-1/2 top-1/2 pointer-events-none z-20"
+            style={{
+              transform: `translate(calc(-50% + ${betDx}px), calc(-50% + ${betDy}px))`,
+            }}
+          >
+            <BetDisplay amount={player.currentBet} stackDisplayMode={stackDisplayMode} bigBlind={bigBlind} />
+          </div>
+        )}
       </div>
+
       <div
         className="mt-1 text-xs text-gray-300 bg-gray-900/70 px-2 py-0.5 rounded whitespace-nowrap cursor-pointer select-none"
         onDoubleClick={toggleDisplayMode}
@@ -67,13 +86,6 @@ export default function Seat({ player, isDealer, isActive, isDealt, style, onCon
       >
         {formattedStack}
       </div>
-
-      {/* Current bet */}
-      {player.currentBet > 0 && (
-        <div className="mt-0.5">
-          <BetDisplay amount={player.currentBet} />
-        </div>
-      )}
     </div>
   );
 }
