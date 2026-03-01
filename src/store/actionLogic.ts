@@ -1,4 +1,4 @@
-import type { Player } from '../types';
+import type { EnrichedPlayer } from '../types';
 import { getPreflopActionOrder, getPostflopActionOrder } from '../utils/positions';
 
 /**
@@ -12,7 +12,7 @@ import { getPreflopActionOrder, getPostflopActionOrder } from '../utils/position
  */
 export function findNextActivePlayer(
   currentSeatIndex: number,
-  players: Player[],
+  players: EnrichedPlayer[],
   dealerSeatIndex: number,
   seatCount: number,
   street: string,
@@ -56,7 +56,7 @@ export function findNextActivePlayer(
  * Get the first player to act for a given street.
  */
 export function getFirstToAct(
-  players: Player[],
+  players: EnrichedPlayer[],
   dealerSeatIndex: number,
   seatCount: number,
   street: string,

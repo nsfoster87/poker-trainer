@@ -1,11 +1,16 @@
-import { useState } from 'react';
-import { useGameStore } from '../store/gameStore';
+import { useState, useMemo } from 'react';
+import { useGameStore, getEnrichedPlayers } from '../store/gameStore';
 import { useActivePlayerSeat } from '../store/gameSelectors';
 import BetSizer from './BetSizer';
 
 export default function ActionPanel() {
   const activePlayerSeat = useActivePlayerSeat();
   const players = useGameStore((s) => s.players);
+  const handStateByPosition = useGameStore((s) => s.handStateByPosition);
+  const enrichedPlayers = useMemo(
+    () => getEnrichedPlayers(players, handStateByPosition),
+    [players, handStateByPosition],
+  );
   const pot = useGameStore((s) => s.pot);
   const settings = useGameStore((s) => s.settings);
   const playerAction = useGameStore((s) => s.playerAction);
@@ -14,7 +19,7 @@ export default function ActionPanel() {
 
   if (activePlayerSeat === null) return null;
 
-  const activePlayer = players.find((p) => p.seatIndex === activePlayerSeat);
+  const activePlayer = enrichedPlayers.find((p) => p.seatIndex === activePlayerSeat);
   if (!activePlayer) return null;
 
   const { stackDisplayMode, bigBlind } = settings;
@@ -23,7 +28,7 @@ export default function ActionPanel() {
       ? `${(value / bigBlind).toFixed(2)} BB`
       : `$${value.toLocaleString()}`;
 
-  const highestBet = Math.max(...players.map((p) => p.currentBet));
+  const highestBet = Math.max(...enrichedPlayers.map((p) => p.currentBet));
   const callAmount = highestBet - activePlayer.currentBet;
   const minRaise = highestBet + settings.bigBlind;
   const maxBet = activePlayer.currentBet + activePlayer.stack;

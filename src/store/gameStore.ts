@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import type { Player, Street, Card, Settings, ActionRecord, Position } from '../types';
-import { assignPositions, findSeatByPosition, getPreflopActionOrder } from '../utils/positions';
+import type { Player, HandState, EnrichedPlayer, Street, Card, Settings, ActionRecord, Position } from '../types';
+import { assignPositions, findSeatByPosition, getPreflopActionOrder, getPositionsForSeatCount } from '../utils/positions';
 import { cardKey } from '../utils/deck';
 import { findNextActivePlayer, getFirstToAct } from './actionLogic';
 
@@ -15,6 +15,7 @@ interface GameStore {
   lastRaiserPosition: Position | null;
   dealerSeatIndex: number;
   players: Player[];
+  handStateByPosition: Partial<Record<Position, HandState>>;
 
   usedCardKeys: Set<string>;
   cardPickerOpen: boolean;
@@ -39,29 +40,61 @@ interface GameStore {
 function buildPlayers(settings: Settings, dealerSeatIndex: number): Player[] {
   const posMap = assignPositions(dealerSeatIndex, settings.seatCount);
   const players: Player[] = [];
-
   for (let i = 0; i < settings.seatCount; i++) {
     players.push({
       seatIndex: i,
       position: posMap.get(i)!,
-      cards: null,
-      hasFolded: false,
-      currentBet: 0,
-      stack: settings.defaultStacks,
       isUser: i === settings.userSeatIndex,
-      actionHistory: [] as ActionRecord[],
     });
   }
-
   return players;
 }
 
-function computeUsedCards(players: Player[], communityCards: Card[]): Set<string> {
+function buildInitialHandStateByPosition(
+  settings: Settings,
+  existing: Partial<Record<Position, HandState>> | undefined,
+): Partial<Record<Position, HandState>> {
+  const positions = getPositionsForSeatCount(settings.seatCount);
+  const out: Partial<Record<Position, HandState>> = {};
+  for (const pos of positions) {
+    const prev = existing?.[pos];
+    out[pos] = {
+      cards: null,
+      hasFolded: false,
+      currentBet: 0,
+      stack: prev?.stack ?? settings.defaultStacks,
+      actionHistory: [],
+    };
+  }
+  return out;
+}
+
+export function getEnrichedPlayers(
+  players: Player[],
+  handStateByPosition: Partial<Record<Position, HandState>>,
+): EnrichedPlayer[] {
+  return players.map((p) => {
+    const hand = handStateByPosition[p.position];
+    return {
+      ...p,
+      cards: hand?.cards ?? null,
+      hasFolded: hand?.hasFolded ?? false,
+      currentBet: hand?.currentBet ?? 0,
+      stack: hand?.stack ?? 0,
+      actionHistory: hand?.actionHistory ?? [],
+    };
+  });
+}
+
+function computeUsedCards(
+  handStateByPosition: Partial<Record<Position, HandState>>,
+  communityCards: Card[],
+): Set<string> {
   const keys = new Set<string>();
-  for (const p of players) {
-    if (p.cards) {
-      keys.add(cardKey(p.cards[0]));
-      keys.add(cardKey(p.cards[1]));
+  for (const hand of Object.values(handStateByPosition)) {
+    if (hand?.cards) {
+      keys.add(cardKey(hand.cards[0]));
+      keys.add(cardKey(hand.cards[1]));
     }
   }
   for (const c of communityCards) {
@@ -89,6 +122,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   lastRaiserPosition: null,
   dealerSeatIndex: 4,
   players: buildPlayers(DEFAULT_SETTINGS, 4),
+  handStateByPosition: buildInitialHandStateByPosition(DEFAULT_SETTINGS, undefined),
   usedCardKeys: new Set(),
   cardPickerOpen: false,
   cardPickerMode: null,
@@ -104,13 +138,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ settings: newSettings });
       return;
     }
-    const players = buildPlayers(newSettings, get().dealerSeatIndex);
-    set({ settings: newSettings, players, street: 'idle', pot: 0, communityCards: [], activePosition: null, lastRaiserPosition: null, usedCardKeys: new Set() });
+    const { dealerSeatIndex } = get();
+    const players = buildPlayers(newSettings, dealerSeatIndex);
+    const handStateByPosition = buildInitialHandStateByPosition(newSettings, get().handStateByPosition);
+    set({ settings: newSettings, players, handStateByPosition, street: 'idle', pot: 0, communityCards: [], activePosition: null, lastRaiserPosition: null, usedCardKeys: new Set() });
   },
 
   setDealerSeat: (seatIndex) => {
-    const players = buildPlayers(get().settings, seatIndex);
-    set({ dealerSeatIndex: seatIndex, players, street: 'idle', pot: 0, communityCards: [], activePosition: null, lastRaiserPosition: null, usedCardKeys: new Set() });
+    const { settings } = get();
+    const players = buildPlayers(settings, seatIndex);
+    const handStateByPosition = buildInitialHandStateByPosition(settings, get().handStateByPosition);
+    set({ dealerSeatIndex: seatIndex, players, handStateByPosition, street: 'idle', pot: 0, communityCards: [], activePosition: null, lastRaiserPosition: null, usedCardKeys: new Set() });
   },
 
   setUserSeat: (seatIndex) => {
@@ -136,52 +174,73 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   setPlayerStack: (seatIndex, stack) => {
-    const players = get().players.map((p) =>
-      p.seatIndex === seatIndex ? { ...p, stack: Math.max(0, stack) } : p
-    );
-    set({ players });
+    const { players, handStateByPosition } = get();
+    const player = players.find((p) => p.seatIndex === seatIndex);
+    if (!player) return;
+    const pos = player.position;
+    const hand = handStateByPosition[pos];
+    if (!hand) return;
+    const next = { ...handStateByPosition, [pos]: { ...hand, stack: Math.max(0, stack) } };
+    set({ handStateByPosition: next });
   },
 
   rotateDealerLeft: () => {
     const { dealerSeatIndex, settings } = get();
     const newDealer = (dealerSeatIndex + 1) % settings.seatCount;
     const players = buildPlayers(settings, newDealer);
-    set({ dealerSeatIndex: newDealer, players, street: 'idle', pot: 0, communityCards: [], activePosition: null, lastRaiserPosition: null, usedCardKeys: new Set() });
+    const handStateByPosition = buildInitialHandStateByPosition(settings, get().handStateByPosition);
+    set({ dealerSeatIndex: newDealer, players, handStateByPosition, street: 'idle', pot: 0, communityCards: [], activePosition: null, lastRaiserPosition: null, usedCardKeys: new Set() });
   },
 
   initializePlayers: () => {
     const { settings, dealerSeatIndex } = get();
-    set({ players: buildPlayers(settings, dealerSeatIndex) });
+    const players = buildPlayers(settings, dealerSeatIndex);
+    const handStateByPosition = buildInitialHandStateByPosition(settings, get().handStateByPosition);
+    set({ players, handStateByPosition });
   },
 
   deal: () => {
-    const { settings, dealerSeatIndex } = get();
+    const { settings, dealerSeatIndex, handStateByPosition } = get();
     const players = buildPlayers(settings, dealerSeatIndex);
+    const positions = getPositionsForSeatCount(settings.seatCount);
+    const nextHand: Partial<Record<Position, HandState>> = {};
 
     let pot = 0;
-    for (const p of players) {
+    for (const pos of positions) {
+      const hand = handStateByPosition[pos] ?? {
+        cards: null,
+        hasFolded: false,
+        currentBet: 0,
+        stack: settings.defaultStacks,
+        actionHistory: [],
+      };
+      let stack = hand.stack;
       if (settings.ante > 0) {
-        p.stack -= settings.ante;
+        stack -= settings.ante;
         pot += settings.ante;
       }
-    }
-
-    const posMap = assignPositions(dealerSeatIndex, settings.seatCount);
-    for (const p of players) {
-      const pos = posMap.get(p.seatIndex);
+      let currentBet = 0;
       if (pos === 'SB') {
-        p.currentBet = settings.smallBlind;
-        p.stack -= settings.smallBlind;
+        currentBet = settings.smallBlind;
+        stack -= settings.smallBlind;
         pot += settings.smallBlind;
       } else if (pos === 'BB') {
-        p.currentBet = settings.bigBlind;
-        p.stack -= settings.bigBlind;
+        currentBet = settings.bigBlind;
+        stack -= settings.bigBlind;
         pot += settings.bigBlind;
       }
+      nextHand[pos] = {
+        cards: null,
+        hasFolded: false,
+        currentBet,
+        stack,
+        actionHistory: [],
+      };
     }
 
     set({
       players,
+      handStateByPosition: nextHand,
       street: 'preflop',
       pot,
       communityCards: [],
@@ -194,9 +253,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   setUserHoleCards: (cards) => {
-    const players = get().players.map((p) =>
-      p.isUser ? { ...p, cards } : p
-    );
+    const { players, handStateByPosition } = get();
+    const userPlayer = players.find((p) => p.isUser);
+    if (!userPlayer) return;
+    const pos = userPlayer.position;
+    const hand = handStateByPosition[pos];
+    if (!hand) return;
+    const nextHand = { ...handStateByPosition, [pos]: { ...hand, cards } };
+    const usedCardKeys = computeUsedCards(nextHand, get().communityCards);
 
     const { dealerSeatIndex, settings } = get();
     const posMap = assignPositions(dealerSeatIndex, settings.seatCount);
@@ -204,9 +268,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const firstToActSeat = preflopOrder[0];
     const firstToActPosition = posMap.get(firstToActSeat) ?? null;
 
-    const usedCardKeys = computeUsedCards(players, get().communityCards);
     set({
-      players,
+      handStateByPosition: nextHand,
       usedCardKeys,
       cardPickerOpen: false,
       cardPickerMode: null,
@@ -225,8 +288,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   cancelDeal: () => {
     const { settings, dealerSeatIndex } = get();
     const players = buildPlayers(settings, dealerSeatIndex);
+    const handStateByPosition = buildInitialHandStateByPosition(settings, get().handStateByPosition);
     set({
       players,
+      handStateByPosition,
       street: 'idle',
       pot: 0,
       communityCards: [],
@@ -241,16 +306,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setCommunityCards: (newCards) => {
     const state = get();
     const communityCards = [...state.communityCards, ...newCards];
-    const usedCardKeys = computeUsedCards(state.players, communityCards);
-
-    // Reset bets for new street and find first to act
-    const players = state.players.map((p) => ({
-      ...p,
-      currentBet: 0,
-      actionHistory: [] as ActionRecord[],
-    }));
+    const nextHand: Partial<Record<Position, HandState>> = {};
+    for (const pos of Object.keys(state.handStateByPosition) as Position[]) {
+      const hand = state.handStateByPosition[pos];
+      if (hand) {
+        nextHand[pos] = { ...hand, currentBet: 0, actionHistory: [] };
+      }
+    }
+    const usedCardKeys = computeUsedCards(nextHand, communityCards);
+    const enriched = getEnrichedPlayers(state.players, nextHand);
+    const firstToActSeat = getFirstToAct(enriched, state.dealerSeatIndex, state.settings.seatCount, state.street);
     const posMap = assignPositions(state.dealerSeatIndex, state.settings.seatCount);
-    const firstToActSeat = getFirstToAct(players, state.dealerSeatIndex, state.settings.seatCount, state.street);
     const firstToActPosition = firstToActSeat != null ? posMap.get(firstToActSeat) ?? null : null;
 
     set({
@@ -258,7 +324,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       usedCardKeys,
       cardPickerOpen: false,
       cardPickerMode: null,
-      players,
+      handStateByPosition: nextHand,
       activePosition: firstToActPosition,
       lastRaiserPosition: null,
     });
@@ -266,33 +332,45 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   playerAction: (seatIndex, action, amount) => {
     const state = get();
-    const players = state.players.map((p) => (p.seatIndex === seatIndex ? { ...p } : p));
-    const player = players.find((p) => p.seatIndex === seatIndex);
+    const player = state.players.find((p) => p.seatIndex === seatIndex);
     if (!player) return;
+    const pos = player.position;
+    const hand = state.handStateByPosition[pos];
+    if (!hand) return;
 
     const record: ActionRecord = { action, amount };
-    player.actionHistory = [...player.actionHistory, record];
+    const actionHistory = [...hand.actionHistory, record];
 
     let potDelta = 0;
     let newLastRaiserPosition: Position | null = state.lastRaiserPosition;
+    let nextHand: HandState = { ...hand, actionHistory };
 
     if (action === 'fold') {
-      player.hasFolded = true;
-      player.cards = null;
+      nextHand = { ...nextHand, hasFolded: true, cards: null };
     } else if (action === 'call') {
-      const highestBet = Math.max(...players.map((p) => p.currentBet));
-      const callAmount = Math.max(0, highestBet - player.currentBet);
-      player.stack -= callAmount;
+      const enriched = getEnrichedPlayers(state.players, state.handStateByPosition);
+      const highestBet = Math.max(...enriched.map((p) => p.currentBet));
+      const callAmount = Math.max(0, highestBet - hand.currentBet);
+      nextHand = {
+        ...nextHand,
+        stack: hand.stack - callAmount,
+        currentBet: highestBet,
+      };
       potDelta = callAmount;
-      player.currentBet = highestBet;
     } else if (action === 'raise') {
       const raiseTotal = amount ?? state.settings.bigBlind * 2;
-      const additional = raiseTotal - player.currentBet;
-      player.stack -= additional;
+      const additional = raiseTotal - hand.currentBet;
+      nextHand = {
+        ...nextHand,
+        stack: hand.stack - additional,
+        currentBet: raiseTotal,
+      };
       potDelta = additional;
-      player.currentBet = raiseTotal;
-      newLastRaiserPosition = player.position;
+      newLastRaiserPosition = pos;
     }
+
+    const nextHandStateByPosition = { ...state.handStateByPosition, [pos]: nextHand };
+    const enriched = getEnrichedPlayers(state.players, nextHandStateByPosition);
 
     const posMap = assignPositions(state.dealerSeatIndex, state.settings.seatCount);
     const lastRaiserSeat =
@@ -300,14 +378,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
         ? findSeatByPosition(posMap, state.lastRaiserPosition)
         : null;
 
-    // Check if only one player remains
-    const activePlayers = players.filter((p) => !p.hasFolded);
+    const activePlayers = enriched.filter((p) => !p.hasFolded);
     let nextActiveSeat: number | null = null;
-
     if (activePlayers.length > 1) {
       nextActiveSeat = findNextActivePlayer(
         seatIndex,
-        players,
+        enriched,
         state.dealerSeatIndex,
         state.settings.seatCount,
         state.street,
@@ -318,7 +394,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const nextActivePosition = nextActiveSeat != null ? posMap.get(nextActiveSeat) ?? null : null;
 
     set({
-      players,
+      handStateByPosition: nextHandStateByPosition,
       pot: state.pot + potDelta,
       activePosition: nextActivePosition,
       lastRaiserPosition: newLastRaiserPosition,
@@ -349,9 +425,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { dealerSeatIndex, settings } = get();
     const newDealer = (dealerSeatIndex + 1) % settings.seatCount;
     const players = buildPlayers(settings, newDealer);
+    const handStateByPosition = buildInitialHandStateByPosition(settings, get().handStateByPosition);
     set({
       dealerSeatIndex: newDealer,
       players,
+      handStateByPosition,
       street: 'idle',
       pot: 0,
       communityCards: [],

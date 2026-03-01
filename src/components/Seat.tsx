@@ -1,11 +1,11 @@
-import type { Player } from '../types';
+import type { EnrichedPlayer } from '../types';
 import { useGameStore } from '../store/gameStore';
 import DealerChip from './DealerChip';
 import PlayerCards from './PlayerCards';
 import BetDisplay from './BetDisplay';
 
 interface SeatProps {
-  player: Player;
+  player: EnrichedPlayer;
   isDealer: boolean;
   isActive: boolean;
   isDealt: boolean;

@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { useGameStore } from '../store/gameStore';
+import { useState, useCallback, useMemo } from 'react';
+import { useGameStore, getEnrichedPlayers } from '../store/gameStore';
 import { useActivePlayerSeat } from '../store/gameSelectors';
 import { computeSeatPositions, getSeatAngle } from '../utils/seatLayout';
 import Seat from './Seat';
@@ -14,6 +14,11 @@ interface MenuState {
 
 export default function PokerTable() {
   const players = useGameStore((s) => s.players);
+  const handStateByPosition = useGameStore((s) => s.handStateByPosition);
+  const enrichedPlayers = useMemo(
+    () => getEnrichedPlayers(players, handStateByPosition),
+    [players, handStateByPosition],
+  );
   const dealerSeatIndex = useGameStore((s) => s.dealerSeatIndex);
   const activePlayerSeat = useActivePlayerSeat();
   const seatCount = useGameStore((s) => s.settings.seatCount);
@@ -57,7 +62,7 @@ export default function PokerTable() {
     : [];
 
   const isDealt = street !== 'idle';
-  const activePlayers = players.filter((p) => !p.hasFolded);
+  const activePlayers = enrichedPlayers.filter((p) => !p.hasFolded);
   const roundComplete = isDealt && activePlayerSeat === null && activePlayers.length > 1;
   const canAdvance = street === 'preflop' || street === 'flop' || street === 'turn';
   const showAdvance = roundComplete && canAdvance;
@@ -100,7 +105,7 @@ export default function PokerTable() {
       </div>
 
       {/* Seats */}
-      {players.map((player) => {
+      {enrichedPlayers.map((player) => {
         const pos = seatPositions[player.seatIndex];
         return (
           <Seat

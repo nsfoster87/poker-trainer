@@ -24,6 +24,7 @@ const PLACEHOLDER_UI = (
 
 export default function RangeSidebar() {
   const players = useGameStore((s) => s.players);
+  const handStateByPosition = useGameStore((s) => s.handStateByPosition);
   const street = useGameStore((s) => s.street);
   const cardPickerOpen = useGameStore((s) => s.cardPickerOpen);
   const cardPickerMode = useGameStore((s) => s.cardPickerMode);
@@ -40,7 +41,7 @@ export default function RangeSidebar() {
     ? getPreflopActionOrder(dealerSeatIndex, seatCount)
     : getPostflopActionOrder(dealerSeatIndex, seatCount);
 
-  const activePlayers = players.filter((p) => !p.hasFolded);
+  const activePlayers = players.filter((p) => !(handStateByPosition[p.position]?.hasFolded));
   const activeSeatsInActionOrder = actionOrder.filter((seat) =>
     activePlayers.some((p) => p.seatIndex === seat),
   );
@@ -60,6 +61,10 @@ export default function RangeSidebar() {
       : activeSeatsInActionOrder;
 
   const playerBySeat = new Map(players.map((p) => [p.seatIndex, p]));
+  const allActionHistories = players.map((p) => ({
+    seatIndex: p.seatIndex,
+    actionHistory: handStateByPosition[p.position]?.actionHistory ?? [],
+  }));
 
   return (
     <div className="w-64 bg-gray-900/80 border-r border-gray-700 overflow-y-auto p-3 space-y-3">
@@ -67,15 +72,18 @@ export default function RangeSidebar() {
 
       {displayOrder.map((seatIndex) => {
         const player = playerBySeat.get(seatIndex);
-        if (!player || player.hasFolded) return null;
+        if (!player) return null;
+        const handState = handStateByPosition[player.position];
+        if (handState?.hasFolded) return null;
         const priorActions = getPriorActions(
-          players.map((p) => ({ seatIndex: p.seatIndex, actionHistory: p.actionHistory })),
+          allActionHistories,
           actionOrder,
           player.seatIndex,
         );
 
-        const scenario = player.actionHistory.length > 0
-          ? resolveScenario(player.actionHistory, priorActions)
+        const actionHistory = handState?.actionHistory ?? [];
+        const scenario = actionHistory.length > 0
+          ? resolveScenario(actionHistory, priorActions)
           : 'open';
 
         const range = getRange(player.position, scenario);
@@ -101,7 +109,7 @@ export default function RangeSidebar() {
                 {pct.toFixed(1)}%
               </span>
             </div>
-            {player.actionHistory.length > 0 && (
+            {actionHistory.length > 0 && (
               <div className="text-[10px] text-blue-400 mb-1">
                 {SCENARIO_LABELS[scenario]}
               </div>

@@ -22,16 +22,24 @@ export interface ActionRecord {
   amount?: number;
 }
 
+/** Seat identity only: which seat has which position and who is the user. */
 export interface Player {
   seatIndex: number;
   position: Position;
+  isUser: boolean;
+}
+
+/** Hand data owned by a position (cards, stack, bet, status). */
+export interface HandState {
   cards: [Card, Card] | null;
   hasFolded: boolean;
   currentBet: number;
   stack: number;
-  isUser: boolean;
   actionHistory: ActionRecord[];
 }
+
+/** Player + HandState for action logic and UI that need both. */
+export type EnrichedPlayer = Player & HandState;
 
 export type Street = 'preflop' | 'flop' | 'turn' | 'river' | 'idle';
 
@@ -43,6 +51,7 @@ export interface GameState {
   lastRaiserPosition: Position | null;
   dealerSeatIndex: number;
   players: Player[];
+  handStateByPosition: Partial<Record<Position, HandState>>;
 }
 
 export interface Settings {
