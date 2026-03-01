@@ -7,7 +7,7 @@ interface CommunityCardsProps {
 
 function CommunityCard({ card }: { card: Card }) {
   return (
-    <div className="w-12 h-16 rounded-lg bg-white border border-gray-300 flex flex-col items-center justify-center shadow-md text-base font-bold">
+    <div className="w-14 h-20 rounded-lg bg-white border border-gray-300 flex flex-col items-center justify-center shadow-md text-base font-bold">
       <span style={{ color: SUIT_COLORS[card.suit] }}>{card.rank}</span>
       <span style={{ color: SUIT_COLORS[card.suit] }} className="text-xl leading-none">
         {SUIT_SYMBOLS[card.suit]}
@@ -18,7 +18,7 @@ function CommunityCard({ card }: { card: Card }) {
 
 function EmptySlot() {
   return (
-    <div className="w-12 h-16 rounded-lg border-2 border-dashed border-green-600/40" />
+    <div className="w-14 h-20 rounded-lg border-2 border-dashed border-green-600/40" />
   );
 }
 
