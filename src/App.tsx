@@ -57,25 +57,24 @@ export default function App() {
       <Header onOpenRangeEditor={() => setRangeEditorOpen(true)} />
       <div className="flex-1 flex min-h-0">
         <RangeSidebar />
-        <main className="flex-1 flex items-center justify-center p-4">
+        <main className="flex-1 flex items-center justify-center p-4 relative">
           <PokerTable />
+          {cardPickerOpen && cardPickerMode && (
+            <CardPickerModal
+              selectedCards={selectedCards}
+              usedCards={usedCardKeys}
+              maxSelections={maxSelections}
+              onSelect={handleSelect}
+              onDeselect={handleDeselect}
+              onConfirm={handleConfirm}
+              onCancel={handleCancel}
+              title={title}
+            />
+          )}
         </main>
       </div>
 
       <ActionPanel />
-
-      {cardPickerOpen && cardPickerMode && (
-        <CardPickerModal
-          selectedCards={selectedCards}
-          usedCards={usedCardKeys}
-          maxSelections={maxSelections}
-          onSelect={handleSelect}
-          onDeselect={handleDeselect}
-          onConfirm={handleConfirm}
-          onCancel={handleCancel}
-          title={title}
-        />
-      )}
 
       {rangeEditorOpen && (
         <RangeEditorModal onClose={() => setRangeEditorOpen(false)} />

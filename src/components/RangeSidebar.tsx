@@ -14,22 +14,26 @@ const SCENARIO_LABELS: Record<ActionScenario, string> = {
   vs3Bet4Bet: '4-Bet',
 };
 
+const PLACEHOLDER_UI = (
+  <div className="w-64 bg-gray-900/80 border-r border-gray-700 overflow-y-auto p-3 space-y-3">
+    <h2 className="text-sm font-bold text-gray-300 uppercase tracking-wide">Hand Ranges</h2>
+    <p className="text-xs text-gray-500">Deal to see ranges</p>
+  </div>
+);
+
 export default function RangeSidebar() {
   const players = useGameStore((s) => s.players);
   const street = useGameStore((s) => s.street);
+  const cardPickerOpen = useGameStore((s) => s.cardPickerOpen);
+  const cardPickerMode = useGameStore((s) => s.cardPickerMode);
   const dealerSeatIndex = useGameStore((s) => s.dealerSeatIndex);
   const seatCount = useGameStore((s) => s.settings.seatCount);
   const activePlayerIndex = useGameStore((s) => s.activePlayerIndex);
   const getRange = useRangeStore((s) => s.getRange);
 
-  if (street === 'idle') {
-    return (
-      <div className="w-64 bg-gray-900/80 border-r border-gray-700 overflow-y-auto p-3 space-y-3">
-        <h2 className="text-sm font-bold text-gray-300 uppercase tracking-wide">Hand Ranges</h2>
-        <p className="text-xs text-gray-500">Deal to see ranges</p>
-      </div>
-    );
-  }
+  if (street === 'idle') return PLACEHOLDER_UI;
+
+  if (street === 'preflop' && cardPickerOpen && cardPickerMode === 'hole') return PLACEHOLDER_UI;
 
   const actionOrder = street === 'preflop'
     ? getPreflopActionOrder(dealerSeatIndex, seatCount)

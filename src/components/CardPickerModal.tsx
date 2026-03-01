@@ -25,7 +25,7 @@ export default function CardPickerModal({
   const selectedKeys = new Set(selectedCards.map(cardKey));
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+    <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50">
       <div className="bg-gray-800 rounded-xl p-6 shadow-2xl border border-gray-600">
         <h2 className="text-lg font-bold text-white mb-1">{title}</h2>
         <p className="text-sm text-gray-400 mb-4">
