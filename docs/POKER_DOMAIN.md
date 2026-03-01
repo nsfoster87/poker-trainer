@@ -33,18 +33,18 @@ Starting from BTN going clockwise: BTN -> SB -> BB -> UTG -> UTG+1 -> UTG+2 -> L
 
 ### Scaling for Fewer Seats
 
-When the table has fewer than 9 seats, positions are removed from early/middle positions first. The blinds (SB, BB), dealer (BTN), and late positions (CO, HJ) are always preserved.
+When the table has fewer than 9 seats, positions are removed from early/middle positions first. **UTG, UTG+1, and UTG+2 are only used when there are more than 6 players.** At 6 players the first to act (left of BB) is **LJ**; at 5 players it is **HJ**; at 4 players it is **CO**. The blinds (SB, BB), dealer (BTN), and late positions (CO, HJ, LJ when present) are preserved.
 
 | Seats | Positions                                         |
 |-------|---------------------------------------------------|
 | 9     | UTG, UTG+1, UTG+2, LJ, HJ, CO, BTN, SB, BB     |
-| 8     | UTG, UTG+1, UTG+2, HJ, CO, BTN, SB, BB          |
-| 7     | UTG, UTG+1, HJ, CO, BTN, SB, BB                  |
-| 6     | UTG, HJ, CO, BTN, SB, BB                         |
-| 5     | UTG, CO, BTN, SB, BB                              |
-| 4     | CO, BTN, SB, BB                                   |
-| 3     | BTN, SB, BB                                       |
-| 2     | BTN/SB, BB (heads-up; BTN is also SB)            |
+| 8     | UTG+1, UTG+2, LJ, HJ, CO, BTN, SB, BB          |
+| 7     | UTG+2, LJ, HJ, CO, BTN, SB, BB                  |
+| 6     | LJ, HJ, CO, BTN, SB, BB                         |
+| 5     | HJ, CO, BTN, SB, BB                             |
+| 4     | CO, BTN, SB, BB                                 |
+| 3     | BTN, SB, BB                                     |
+| 2     | BTN/SB, BB (heads-up; BTN is also SB)          |
 
 ---
 

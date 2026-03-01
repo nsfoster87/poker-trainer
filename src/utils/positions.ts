@@ -8,10 +8,10 @@ const POSITION_SETS: Record<number, Position[]> = {
   2: ['BTN', 'BB'],
   3: ['BTN', 'SB', 'BB'],
   4: ['CO', 'BTN', 'SB', 'BB'],
-  5: ['UTG', 'CO', 'BTN', 'SB', 'BB'],
-  6: ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
-  7: ['UTG', 'UTG+1', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
-  8: ['UTG', 'UTG+1', 'UTG+2', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
+  5: ['HJ', 'CO', 'BTN', 'SB', 'BB'],
+  6: ['LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
+  7: ['UTG+2', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
+  8: ['UTG+1', 'UTG+2', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
   9: NINE_MAX_POSITIONS,
 };
 
