@@ -7,9 +7,9 @@ interface CommunityCardsProps {
 
 function CommunityCard({ card }: { card: Card }) {
   return (
-    <div className="w-12 h-16 rounded-lg bg-white border border-gray-300 flex flex-col items-center justify-center shadow-md text-sm font-bold">
+    <div className="w-12 h-16 rounded-lg bg-white border border-gray-300 flex flex-col items-center justify-center shadow-md text-base font-bold">
       <span style={{ color: SUIT_COLORS[card.suit] }}>{card.rank}</span>
-      <span style={{ color: SUIT_COLORS[card.suit] }} className="text-lg leading-none">
+      <span style={{ color: SUIT_COLORS[card.suit] }} className="text-xl leading-none">
         {SUIT_SYMBOLS[card.suit]}
       </span>
     </div>

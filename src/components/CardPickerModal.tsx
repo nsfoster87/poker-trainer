@@ -53,7 +53,7 @@ export default function CardPickerModal({
                       }
                     }}
                     className={`
-                      w-10 h-12 rounded border text-xs font-bold flex flex-col items-center justify-center
+                      w-10 h-12 rounded border text-sm font-bold flex flex-col items-center justify-center
                       transition-all select-none
                       ${isUsed
                         ? 'bg-gray-700 border-gray-600 text-gray-600 cursor-not-allowed'
